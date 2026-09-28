@@ -1,0 +1,77 @@
+:root {
+  /* Surface */
+  --bg-base: #0b0f14;
+  --bg-surface: #121820;
+  --bg-surface-hover: #1a232e;
+  --bg-elevated: #161e28;
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --grid-dot: rgba(255, 255, 255, 0.06);
+
+  /* Brand accent (CTA, fokus, seleksi, orchestrator) */
+  --accent: #dc2626;
+  --accent-hover: #b91c1c;
+  --accent-soft: rgba(220, 38, 38, 0.12);
+  --accent-glow: rgba(220, 38, 38, 0.45);
+
+  /* Semantic (status data) — TERPISAH dari accent */
+  --status-online: #22c55e;
+  --status-busy: #f59e0b;
+  --status-idle: #64748b;
+  --status-offline: #475569;
+  --status-error: #ef4444;
+
+  /* Text */
+  --text-main: #f3f4f6;
+  --text-muted: #9ca3af;
+  --text-faint: #6b7280;
+
+  /* Typography */
+  --font-sans: 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Radii */
+  --r-card: 12px;
+  --r-button: 8px;
+  --r-badge: 6px;
+
+  /* Spacing scale */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-6: 24px;
+  --s-8: 32px;
+
+  /* Motion */
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --dur-fast: 150ms;
+  --dur-normal: 250ms;
+  --dur-slow: 400ms;
+
+  /* Layout */
+  --sidebar-w: 260px;
+  --chat-w: 360px;
+  --topbar-h: 48px;
+  --bottomnav-h: 56px;
+}
+
+[data-theme="light"] {
+  --bg-base: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-surface-hover: #f1f5f9;
+  --bg-elevated: #ffffff;
+  --border-subtle: rgba(0, 0, 0, 0.08);
+  --border-strong: rgba(0, 0, 0, 0.16);
+  --grid-dot: rgba(0, 0, 0, 0.06);
+
+  --accent: #dc2626;
+  --accent-hover: #b91c1c;
+  --accent-soft: rgba(220, 38, 38, 0.08);
+  --accent-glow: rgba(220, 38, 38, 0.25);
+
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --text-faint: #94a3b8;
+}

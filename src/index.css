@@ -1,0 +1,166 @@
+@import "tailwindcss";
+@import "./styles/tokens.css";
+@import "@xyflow/react/dist/style.css";
+
+@layer base {
+  * {
+    border-color: var(--border-subtle);
+  }
+  body {
+    background-color: var(--bg-base);
+    color: var(--text-main);
+    font-family: var(--font-sans);
+    overflow: hidden;
+  }
+}
+
+/* Glass panel */
+.glass-panel {
+  background: rgba(18, 24, 32, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-subtle);
+}
+
+@media (max-width: 768px) {
+  .glass-panel {
+    background: var(--bg-surface);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Dot Grid Background */
+.bg-dot-grid {
+  background-image: radial-gradient(var(--grid-dot) 1.2px, transparent 1.2px);
+  background-size: 20px 20px;
+}
+
+/* Animations - GPU only: transform and opacity */
+.fade-in-up {
+  animation: fadeInUp var(--dur-slow) var(--ease-out) forwards;
+  opacity: 0;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Orchestrator Rings Animation */
+@keyframes ringPulse {
+  0% {
+    transform: scale(0.96);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.35;
+  }
+  100% {
+    transform: scale(0.96);
+    opacity: 0.8;
+  }
+}
+
+@keyframes ringPulseThinking {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.2;
+  }
+  100% {
+    transform: scale(0.95);
+    opacity: 0.9;
+  }
+}
+
+.orchestrator-ring-1 {
+  animation: ringPulse 2.8s var(--ease-spring) infinite;
+}
+.orchestrator-ring-2 {
+  animation: ringPulse 3.4s var(--ease-spring) infinite 0.4s;
+}
+.orchestrator-ring-3 {
+  animation: ringPulse 4s var(--ease-spring) infinite 0.8s;
+}
+
+.thinking .orchestrator-ring-1 {
+  animation: ringPulseThinking 1.2s var(--ease-out) infinite;
+}
+.thinking .orchestrator-ring-2 {
+  animation: ringPulseThinking 1.5s var(--ease-out) infinite 0.2s;
+}
+.thinking .orchestrator-ring-3 {
+  animation: ringPulseThinking 1.8s var(--ease-out) infinite 0.4s;
+}
+
+/* Active Delegation Edge Dash Animation */
+@keyframes dashOffset {
+  to {
+    stroke-dashoffset: -32;
+  }
+}
+
+.edge-active path {
+  stroke-dasharray: 6 4;
+  animation: dashOffset 0.8s linear infinite;
+}
+
+/* Real-time Traffic Stream Animation */
+@keyframes trafficFlow {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: -32;
+  }
+}
+
+.edge-traffic-stream {
+  animation: trafficFlow 0.75s linear infinite;
+}
+
+/* Auto Save Indicator Blink */
+@keyframes autoSaveBlink {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; filter: drop-shadow(0 0 4px var(--accent)); }
+}
+
+.auto-saving {
+  animation: autoSaveBlink 0.6s ease-in-out infinite;
+}
+
+/* Reduced Motion Fallback */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
