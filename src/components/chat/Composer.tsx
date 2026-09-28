@@ -90,15 +90,19 @@ export const Composer: React.FC<ComposerProps> = ({
   const setTargetAgentId = useChatStore((s) => s.setTargetAgentId);
   const toggleVoice = useChatStore((s) => s.toggleVoice);
 
-  const config = projectConfigs[projectId] || {
-    hermesMode: 'default',
-    thinkingLevel: 'medium',
-    hermesModel: 'claude-opus-4.6',
-    voiceActive: false,
-    targetAgentId: null,
-    sessionStartTime: Date.now() - 938000,
-    tokenUsage: { used: 0, max: 1000000 },
-    sessionsCount: 2,
+  const rawConfig = projectConfigs[projectId];
+  const config = {
+    hermesMode: rawConfig?.hermesMode || 'default',
+    thinkingLevel: rawConfig?.thinkingLevel || 'medium',
+    hermesModel: rawConfig?.hermesModel || 'claude-opus-4.6',
+    voiceActive: Boolean(rawConfig?.voiceActive),
+    targetAgentId: rawConfig?.targetAgentId ?? null,
+    sessionStartTime: rawConfig?.sessionStartTime || Date.now() - 938000,
+    tokenUsage: {
+      used: rawConfig?.tokenUsage?.used ?? 0,
+      max: rawConfig?.tokenUsage?.max ?? 1000000,
+    },
+    sessionsCount: rawConfig?.sessionsCount ?? 2,
   };
 
   const hermesMode = config.hermesMode;
@@ -107,14 +111,14 @@ export const Composer: React.FC<ComposerProps> = ({
   const targetAgentId = config.targetAgentId;
   const voiceActive = config.voiceActive;
 
-  const agentList = Object.values(agents);
-  const targetAgent = targetAgentId ? agents[targetAgentId] : null;
+  const agentList = Object.values(agents || {});
+  const targetAgent = targetAgentId && agents ? agents[targetAgentId] : null;
 
   // Short label for model display button
   const currentModelMeta = HERMES_MODELS.find((m) => m.id === hermesModel);
   const modelShortDisplay = targetAgent
     ? targetAgent.name
-    : currentModelMeta?.shortLabel || hermesModel.split('/').pop() || 'model';
+    : currentModelMeta?.shortLabel || (typeof hermesModel === 'string' ? hermesModel.split('/').pop() : '') || 'opus 4.6';
 
   // Extract all agents mentioned anywhere in content
   const mentionedAgents = extractAllMentions(content, agents);
@@ -158,7 +162,8 @@ export const Composer: React.FC<ComposerProps> = ({
     setContent(val);
 
     // Detect Hermes slash command (starts with / or word with /)
-    const cursor = e.target.selectionStart;
+    const rawCursor = e.target.selectionStart;
+    const cursor = typeof rawCursor === 'number' && rawCursor > 0 ? rawCursor : val.length;
     const textBefore = val.slice(0, cursor);
 
     if (textBefore.startsWith('/')) {
@@ -185,22 +190,28 @@ export const Composer: React.FC<ComposerProps> = ({
   const handleSelectMention = (agent: AgentDTO) => {
     setMentionFilter(null);
     if (textareaRef.current) {
-      const cursor = textareaRef.current.selectionStart;
+      const cursor = typeof textareaRef.current.selectionStart === 'number'
+        ? textareaRef.current.selectionStart
+        : content.length;
       const textBefore = content.slice(0, cursor);
       const lastAt = textBefore.lastIndexOf('@');
-      const textAfter = content.slice(cursor);
+      if (lastAt !== -1) {
+        const queryMatch = content.slice(lastAt).match(/^@\w*/);
+        const tokenLength = queryMatch ? queryMatch[0].length : (cursor - lastAt);
+        const textAfter = content.slice(lastAt + tokenLength);
 
-      const mentionTag = `@${agent.name} `;
-      const newContent = textBefore.slice(0, lastAt) + mentionTag + textAfter;
-      setContent(newContent);
+        const mentionTag = `@${agent.name} `;
+        const newContent = content.slice(0, lastAt) + mentionTag + textAfter;
+        setContent(newContent);
 
-      setTimeout(() => {
-        if (textareaRef.current) {
-          const newPos = lastAt + mentionTag.length;
-          textareaRef.current.focus();
-          textareaRef.current.setSelectionRange(newPos, newPos);
-        }
-      }, 10);
+        setTimeout(() => {
+          if (textareaRef.current) {
+            const newPos = lastAt + mentionTag.length;
+            textareaRef.current.focus();
+            textareaRef.current.setSelectionRange(newPos, newPos);
+          }
+        }, 10);
+      }
     }
   };
 

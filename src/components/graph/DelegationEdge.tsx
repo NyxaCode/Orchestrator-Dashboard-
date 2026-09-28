@@ -16,9 +16,10 @@ export const DelegationEdge = memo(
     markerEnd,
     data,
   }: EdgeProps) => {
-    const agents = useAgentsStore((s) => s.agents);
-    const selectedAgentId = useAgentsStore((s) => s.selectedAgentId);
-    const activeDelegations = useAgentsStore((s) => s.activeDelegations);
+    // Only subscribe to boolean indicating if this specific edge is connected to the selected agent!
+    const isEdgeSelected = useAgentsStore(
+      (s) => s.selectedAgentId === source || s.selectedAgentId === target
+    );
 
     // Safeguard: Check that all coordinates are valid finite numbers to prevent SVG NaN errors
     if (
@@ -37,35 +38,16 @@ export const DelegationEdge = memo(
     const isSecondary = Boolean(data?.isSecondary);
     const secondaryLabel = (data?.label as string) || (isSecondary ? 'PEER' : 'link');
 
-    // Source and Target Agents
-    const sourceAgent = agents[source];
-    const targetAgent = agents[target];
-    const selectedAgent = selectedAgentId ? agents[selectedAgentId] : null;
+    const isActive = Boolean(data?.active);
+    const isReversed = Boolean(data?.isReversed);
 
-    // Check if this edge is connected to the selected agent
-    const isSourceSelected = selectedAgentId === source;
-    const isTargetSelected = selectedAgentId === target;
-    const isEdgeSelected = isSourceSelected || isTargetSelected;
-    const selectedColor = isSourceSelected
-      ? sourceAgent?.color || '#ef4444'
-      : isTargetSelected
-      ? targetAgent?.color || '#ef4444'
-      : selectedAgent?.color || '#ef4444';
+    const sourceColor = (data?.sourceColor as string) || '#ef4444';
+    const targetColor = (data?.targetColor as string) || '#64748b';
+    const selectedColor = isEdgeSelected ? sourceColor : '#ef4444';
+    const trafficColor = (data?.trafficColor as string) || sourceColor;
 
-    // Find active delegation traveling on this edge
-    const activeDelegation = activeDelegations.find(
-      (d) =>
-        (d.fromAgentId === source && d.toAgentId === target) ||
-        (d.fromAgentId === target && d.toAgentId === source)
-    );
-
-    const isActive = Boolean(activeDelegation);
-    const isReversed = activeDelegation ? activeDelegation.fromAgentId === target : false;
-
-    // Sender agent defines the traffic stream color and origin
-    const senderAgent = activeDelegation ? agents[activeDelegation.fromAgentId] : null;
-    const receiverAgent = activeDelegation ? agents[activeDelegation.toAgentId] : null;
-    const trafficColor = senderAgent?.color || '#ef4444';
+    const senderName = (data?.senderName as string) || 'Agent';
+    const receiverName = (data?.receiverName as string) || 'Target';
 
     // Path geometry:
     // Primary lines: Straight center-to-center ray (Obsidian note style)
@@ -108,15 +90,14 @@ export const DelegationEdge = memo(
 
     return (
       <>
-        {/* Glow halo under active traffic line or selected edge */}
+        {/* Glow halo under active traffic line or selected edge (Hardware-accelerated translucent stroke) */}
         {isActive && (
           <path
             d={edgePath}
             fill="none"
             stroke={trafficColor}
-            strokeWidth={6}
-            strokeOpacity={0.4}
-            className="filter blur-[3px]"
+            strokeWidth={5}
+            strokeOpacity={0.25}
           />
         )}
 
@@ -126,8 +107,7 @@ export const DelegationEdge = memo(
             fill="none"
             stroke={selectedColor}
             strokeWidth={3}
-            strokeOpacity={0.25}
-            className="filter blur-[2px]"
+            strokeOpacity={0.2}
           />
         )}
 
@@ -151,7 +131,6 @@ export const DelegationEdge = memo(
               fill="#ffffff"
               stroke={trafficColor}
               strokeWidth={1.5}
-              style={{ filter: `drop-shadow(0 0 6px ${trafficColor})` }}
             >
               <animateMotion
                 path={motionPath}
@@ -196,11 +175,11 @@ export const DelegationEdge = memo(
                 >
                   <Activity className="w-2.5 h-2.5 animate-pulse" style={{ color: trafficColor }} />
                   <span className="font-bold" style={{ color: trafficColor }}>
-                    {senderAgent?.name || 'Agent'}
+                    {senderName}
                   </span>
                   <ArrowRight className="w-2 h-2 text-gray-400" />
                   <span className="text-gray-300">
-                    {receiverAgent?.name || 'Target'}
+                    {receiverName}
                   </span>
                 </div>
               ) : isSecondary ? (

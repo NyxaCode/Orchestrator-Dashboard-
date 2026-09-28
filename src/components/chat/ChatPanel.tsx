@@ -6,6 +6,7 @@ import { useUiStore } from '../../stores/ui';
 import { MessageList } from './MessageList';
 import { Composer, ComposerAttachment } from './Composer';
 import { HermesStatusBar } from './HermesStatusBar';
+import { AgentAvatar } from '../ui/AgentAvatar';
 import { getAdapter } from '../../server/adapters';
 import { ChevronRight, ArrowLeft, AlertTriangle, ShieldCheck, UserCheck, Sparkles, Maximize2, Minimize2 } from 'lucide-react';
 import { IconButton } from '../ui/IconButton';
@@ -14,9 +15,18 @@ import { extractAllMentions } from '../../lib/sanitize';
 import { cleanModelName } from '../../lib/format';
 
 export const ChatPanel: React.FC = () => {
-  const activeProjectId = useProjectsStore((s) => s.activeProjectId);
-  const projects = useProjectsStore((s) => s.projects);
-  const currentProject = projects.find((p) => p.id === activeProjectId) || projects[0];
+  const rawProjectId = useProjectsStore((s) => s.activeProjectId);
+  const activeProjectId = rawProjectId || 'proj-1';
+  const projects = useProjectsStore((s) => s.projects) || [];
+  const currentProject = projects.find((p) => p.id === activeProjectId) || projects[0] || {
+    id: activeProjectId,
+    name: 'DMC Core Pipeline',
+    description: '',
+    archived: 0,
+    agent_ids: ['shinaa', 'rika', 'lia'],
+    active_tasks_count: 0,
+    created_at: Date.now(),
+  };
 
   // Per-project Hermes agent configuration & sessions
   const projectConfigs = useChatStore((s) => s.projectConfigs);
@@ -28,15 +38,19 @@ export const ChatPanel: React.FC = () => {
   const clearMessages = useChatStore((s) => s.clearMessages);
   const updateProjectTelemetry = useChatStore((s) => s.updateProjectTelemetry);
 
-  const config = projectConfigs[activeProjectId] || {
-    hermesMode: 'default',
-    thinkingLevel: 'medium',
-    hermesModel: 'claude-opus-4.6',
-    voiceActive: false,
-    targetAgentId: null,
-    sessionStartTime: Date.now() - 938000,
-    tokenUsage: { used: 0, max: 1000000 },
-    sessionsCount: 2,
+  const rawConfig = projectConfigs[activeProjectId];
+  const config = {
+    hermesMode: rawConfig?.hermesMode || 'default',
+    thinkingLevel: rawConfig?.thinkingLevel || 'medium',
+    hermesModel: rawConfig?.hermesModel || 'claude-opus-4.6',
+    voiceActive: Boolean(rawConfig?.voiceActive),
+    targetAgentId: rawConfig?.targetAgentId ?? null,
+    sessionStartTime: rawConfig?.sessionStartTime || Date.now() - 938000,
+    tokenUsage: {
+      used: rawConfig?.tokenUsage?.used ?? 0,
+      max: rawConfig?.tokenUsage?.max ?? 1000000,
+    },
+    sessionsCount: rawConfig?.sessionsCount ?? 2,
   };
 
   const targetAgentId = config.targetAgentId;
@@ -95,18 +109,22 @@ export const ChatPanel: React.FC = () => {
       if (['default', 'planning', 'ask'].includes(modeArg)) {
         setHermesMode(activeProjectId, modeArg);
       }
+      return;
     } else if (trimmed.startsWith('/thinking ')) {
       const thinkArg = trimmed.split(/\s+/)[1]?.toLowerCase() as ThinkingLevel;
       if (['off', 'low', 'medium', 'high', 'extended'].includes(thinkArg)) {
         setThinkingLevel(activeProjectId, thinkArg);
       }
+      return;
     } else if (trimmed.startsWith('/model ')) {
       const modelArg = trimmed.split(/\s+/)[1];
       if (modelArg) {
         setHermesModel(activeProjectId, modelArg);
       }
+      return;
     } else if (trimmed === '/voice') {
       toggleVoice(activeProjectId);
+      return;
     } else if (trimmed.startsWith('/agent ')) {
       const agentArg = trimmed.split(/\s+/)[1]?.toLowerCase();
       const matched = Object.values(agents).find(
@@ -115,6 +133,7 @@ export const ChatPanel: React.FC = () => {
       if (matched) {
         setTargetAgentId(activeProjectId, matched.role === 'orchestrator' ? null : matched.id);
       }
+      return;
     }
 
     const adapter = getAdapter();
@@ -286,12 +305,13 @@ export const ChatPanel: React.FC = () => {
                   color: targetColor,
                 }}
               >
-                <span
-                  className="w-2 h-2 rounded-full"
-                  style={{
-                    backgroundColor: targetColor,
-                    boxShadow: `0 0 8px ${targetColor}`,
-                  }}
+                <AgentAvatar
+                  agentId={targetAgent.id}
+                  role={targetAgent.role}
+                  name={targetAgent.name}
+                  avatarUrl={targetAgent.avatar_url}
+                  size={18}
+                  color={targetColor}
                 />
                 <span className="font-semibold text-white truncate max-w-[120px]">
                   {targetAgent.name}
@@ -307,7 +327,13 @@ export const ChatPanel: React.FC = () => {
                 {currentProject.name}
               </span>
               <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/5 border border-white/15 text-[11px] font-mono text-gray-300 shrink-0">
-                <ShieldCheck className="w-3 h-3 text-red-400" />
+                <AgentAvatar
+                  agentId="shinaa"
+                  role="orchestrator"
+                  name="Shinaa"
+                  size={16}
+                  color="#ef4444"
+                />
                 <span>Lead</span>
               </div>
             </div>
@@ -371,14 +397,20 @@ export const ChatPanel: React.FC = () => {
         {/* If direct session is empty, show welcoming prompt */}
         {targetAgent && messages.length === 0 && (
           <div className="p-4 flex flex-col items-center justify-center text-center my-6">
-            <div
-              className="w-12 h-12 rounded-full flex items-center justify-center border mb-2.5 shadow-xl"
-              style={{
-                backgroundColor: `${targetColor}15`,
-                borderColor: `${targetColor}60`,
-              }}
-            >
-              <Sparkles className="w-5 h-5" style={{ color: targetColor }} />
+            <div className="mb-3 relative">
+              <div
+                className="absolute -inset-2 rounded-full blur-md opacity-40 pointer-events-none"
+                style={{ backgroundColor: targetColor }}
+              />
+              <AgentAvatar
+                agentId={targetAgent.id}
+                role={targetAgent.role}
+                name={targetAgent.name}
+                avatarUrl={targetAgent.avatar_url}
+                size={54}
+                color={targetColor}
+                className="relative z-10"
+              />
             </div>
             <h4 className="text-sm font-semibold text-white mb-1">
               Sesi Langsung: {targetAgent.name}

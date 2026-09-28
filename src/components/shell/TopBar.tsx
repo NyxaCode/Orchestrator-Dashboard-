@@ -12,8 +12,11 @@ import {
   Shield,
   Activity,
   Menu,
+  Network,
+  Kanban,
 } from 'lucide-react';
 import { IconButton } from '../ui/IconButton';
+import { cn } from '../../lib/cn';
 
 export const TopBar: React.FC = () => {
   const activeProjectId = useProjectsStore((s) => s.activeProjectId);
@@ -66,20 +69,51 @@ export const TopBar: React.FC = () => {
 
       {/* Middle Zone: View Selector & Ornaments */}
       <div className="flex items-center gap-2">
-        {/* VIEW ▾ Pill Selector */}
+        {/* Quick View Segmented Tabs: [Graph] [Kanban] */}
+        <div className="flex items-center p-0.5 rounded-lg bg-[#0e141c] border border-white/10 shadow-xs">
+          <button
+            type="button"
+            onClick={() => setViewMode('graph')}
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-mono transition-all cursor-pointer',
+              viewMode === 'graph'
+                ? 'bg-red-600 text-white font-bold shadow-xs'
+                : 'text-gray-400 hover:text-white hover:bg-white/5'
+            )}
+          >
+            <Network className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Graph</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setViewMode('kanban')}
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-mono transition-all cursor-pointer',
+              viewMode === 'kanban'
+                ? 'bg-red-600 text-white font-bold shadow-xs'
+                : 'text-gray-400 hover:text-white hover:bg-white/5'
+            )}
+          >
+            <Kanban className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Kanban</span>
+          </button>
+        </div>
+
+        {/* VIEW ▾ Pill Selector for Full Options */}
         <div className="relative">
           <button
             type="button"
             onClick={() => setShowViewDropdown(!showViewDropdown)}
-            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#161e28] hover:bg-[#1a232e] text-xs font-mono text-gray-200 border border-white/15 shadow-xs transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#161e28] hover:bg-[#1a232e] text-xs font-mono text-gray-300 border border-white/15 shadow-xs transition-colors cursor-pointer"
           >
             <Layers className="w-3 h-3 text-red-400" />
-            <span className="uppercase">VIEW: {viewMode}</span>
+            <span className="uppercase hidden md:inline">{viewMode}</span>
             <ChevronDown className="w-3 h-3 text-gray-400" />
           </button>
 
           {showViewDropdown && (
-            <div className="absolute top-full mt-1.5 left-0 z-40 w-36 rounded-lg glass-panel border border-white/15 p-1 shadow-2xl animate-in fade-in zoom-in-95 duration-100">
+            <div className="absolute top-full mt-1.5 left-0 z-40 w-44 rounded-lg glass-panel border border-white/15 p-1 shadow-2xl animate-in fade-in zoom-in-95 duration-100">
               <button
                 type="button"
                 onClick={() => {
@@ -91,6 +125,18 @@ export const TopBar: React.FC = () => {
                 }`}
               >
                 ● Radial Graph
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setViewMode('kanban');
+                  setShowViewDropdown(false);
+                }}
+                className={`w-full text-left px-2.5 py-1.5 rounded text-xs font-mono transition-colors cursor-pointer ${
+                  viewMode === 'kanban' ? 'bg-red-950/60 text-white font-bold' : 'text-gray-300 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                ● Kanban Board
               </button>
               <button
                 type="button"

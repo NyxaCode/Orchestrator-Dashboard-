@@ -5,6 +5,7 @@ import { useChatStore } from '../../stores/chat';
 import { formatTime, cleanModelName } from '../../lib/format';
 import { parseMarkdown, formatInlineMarkdown } from '../../lib/sanitize';
 import { TaskChip } from './TaskChip';
+import { AgentAvatar } from '../ui/AgentAvatar';
 import { RotateCw, AlertTriangle, Paperclip, FileCode, FileArchive, FileText, File as FileIcon } from 'lucide-react';
 import { cn } from '../../lib/cn';
 
@@ -61,7 +62,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({ message, threadId }) =
   }
 
   const isUser = message.role === 'user';
-  const agent = message.agent_id ? agents[message.agent_id] : null;
+  const agent = message.agent_id && agents ? agents[message.agent_id] : null;
   const senderName = isUser
     ? 'You'
     : agent?.name || (message.role === 'orchestrator' ? 'Shinaa (Lead)' : 'Agent');
@@ -70,11 +71,12 @@ export const MessageItem: React.FC<MessageItemProps> = ({ message, threadId }) =
 
   // Extract <thinking> tags if present
   let thinkingContent = '';
-  let mainContent = message.content;
-  const thinkingMatch = message.content.match(/<thinking>([\s\S]*?)<\/thinking>/i);
+  const rawContent = message?.content || '';
+  let mainContent = rawContent;
+  const thinkingMatch = rawContent.match(/<thinking>([\s\S]*?)<\/thinking>/i);
   if (thinkingMatch) {
     thinkingContent = thinkingMatch[1].trim();
-    mainContent = message.content.replace(/<thinking>[\s\S]*?<\/thinking>/i, '').trim();
+    mainContent = rawContent.replace(/<thinking>[\s\S]*?<\/thinking>/i, '').trim();
   }
 
   const parsedBlocks = parseMarkdown(mainContent);
@@ -86,20 +88,16 @@ export const MessageItem: React.FC<MessageItemProps> = ({ message, threadId }) =
         isUser ? 'bg-white/[0.02]' : 'hover:bg-white/[0.02]'
       )}
     >
-      {/* 28px Avatar */}
+      {/* 28px Vector Profile Image Avatar */}
       <div className="shrink-0 mt-0.5">
-        <div
-          className={cn(
-            'w-7 h-7 rounded-full flex items-center justify-center font-mono font-bold text-[11px] uppercase border select-none',
-            isUser
-              ? 'bg-red-950/80 border-red-500/50 text-red-300'
-              : message.role === 'orchestrator'
-              ? 'bg-[#1c2430] border-red-500/60 text-white shadow-[0_0_8px_rgba(220,38,38,0.4)]'
-              : 'bg-[#161e28] border-white/20 text-gray-200'
-          )}
-        >
-          {senderName.slice(0, 2)}
-        </div>
+        <AgentAvatar
+          agentId={message.agent_id}
+          role={message.role}
+          name={senderName}
+          avatarUrl={agent?.avatar_url}
+          size={28}
+          color={agent?.color}
+        />
       </div>
 
       {/* Message Body */}

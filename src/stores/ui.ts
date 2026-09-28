@@ -8,8 +8,8 @@ interface UiState {
   inspectorOpen: boolean;
   inspectorTab: InspectorTab;
   inspectorAgentId: string | null;
-  viewMode: 'graph' | 'list';
-  mobileActiveTab: 'graph' | 'projects' | 'chat';
+  viewMode: 'graph' | 'kanban' | 'list';
+  mobileActiveTab: 'graph' | 'kanban' | 'projects' | 'chat';
   highlightedAgentId: string | null;
   chatWidth: number;
 
@@ -22,8 +22,8 @@ interface UiState {
   openInspector: (agentId: string, tab?: InspectorTab) => void;
   closeInspector: () => void;
   setInspectorTab: (tab: InspectorTab) => void;
-  setViewMode: (mode: 'graph' | 'list') => void;
-  setMobileActiveTab: (tab: 'graph' | 'projects' | 'chat') => void;
+  setViewMode: (mode: 'graph' | 'kanban' | 'list') => void;
+  setMobileActiveTab: (tab: 'graph' | 'kanban' | 'projects' | 'chat') => void;
   setHighlightedAgentId: (id: string | null) => void;
 }
 

@@ -26,7 +26,6 @@ import {
   ZoomOut,
   Maximize2,
   RotateCcw,
-  UserPlus,
   Radio,
 } from 'lucide-react';
 
@@ -43,7 +42,7 @@ export const GraphCanvasInner: React.FC = () => {
   const agents = useAgentsStore((s) => s.agents);
   const selectAgent = useAgentsStore((s) => s.selectAgent);
   const updateAgentPosition = useAgentsStore((s) => s.updateAgentPosition);
-  const addAgent = useAgentsStore((s) => s.addAgent);
+  const updateAgentPositionsBatch = useAgentsStore((s) => s.updateAgentPositionsBatch);
   const resetPositionsToRadial = useAgentsStore((s) => s.resetPositionsToRadial);
   const activeDelegations = useAgentsStore((s) => s.activeDelegations);
 
@@ -80,11 +79,13 @@ export const GraphCanvasInner: React.FC = () => {
       const parentExists = agentList.some((a) => a.id === parentId);
       const effectiveParentId = parentExists ? parentId : orchestrator.id;
 
-      const isDelegating = activeDelegations.some(
+      const delegation = activeDelegations.find(
         (d) =>
           (d.fromAgentId === effectiveParentId && d.toAgentId === sub.id) ||
           (d.fromAgentId === sub.id && d.toAgentId === effectiveParentId)
       );
+      const isDelegating = Boolean(delegation);
+      const parentAgent = agentList.find((a) => a.id === effectiveParentId);
 
       edgesList.push({
         id: `primary-${effectiveParentId}-${sub.id}`,
@@ -96,6 +97,18 @@ export const GraphCanvasInner: React.FC = () => {
           active: isDelegating,
           isSecondary: false,
           label: 'HIERARCHY',
+          sourceColor: parentAgent?.color || '#ef4444',
+          targetColor: sub.color || '#64748b',
+          trafficColor: delegation
+            ? (delegation.fromAgentId === sub.id ? sub.color : parentAgent?.color || '#ef4444')
+            : undefined,
+          senderName: delegation
+            ? (delegation.fromAgentId === sub.id ? sub.name : parentAgent?.name || 'Lead')
+            : undefined,
+          receiverName: delegation
+            ? (delegation.toAgentId === sub.id ? sub.name : parentAgent?.name || 'Lead')
+            : undefined,
+          isReversed: delegation ? delegation.fromAgentId === sub.id : false,
         },
       });
     });
@@ -109,11 +122,12 @@ export const GraphCanvasInner: React.FC = () => {
       for (let j = i + 1; j < layer1Agents.length; j++) {
         const a1 = layer1Agents[i];
         const a2 = layer1Agents[j];
-        const isDelegating = activeDelegations.some(
+        const delegation = activeDelegations.find(
           (d) =>
             (d.fromAgentId === a1.id && d.toAgentId === a2.id) ||
             (d.fromAgentId === a2.id && d.toAgentId === a1.id)
         );
+        const isDelegating = Boolean(delegation);
 
         edgesList.push({
           id: `sec-l1-${a1.id}-${a2.id}`,
@@ -125,6 +139,18 @@ export const GraphCanvasInner: React.FC = () => {
             active: isDelegating,
             isSecondary: true,
             label: 'PEER · L1',
+            sourceColor: a1.color || '#64748b',
+            targetColor: a2.color || '#64748b',
+            trafficColor: delegation
+              ? (delegation.fromAgentId === a2.id ? a2.color : a1.color)
+              : undefined,
+            senderName: delegation
+              ? (delegation.fromAgentId === a2.id ? a2.name : a1.name)
+              : undefined,
+            receiverName: delegation
+              ? (delegation.toAgentId === a2.id ? a2.name : a1.name)
+              : undefined,
+            isReversed: delegation ? delegation.fromAgentId === a2.id : false,
           },
         });
       }
@@ -147,11 +173,12 @@ export const GraphCanvasInner: React.FC = () => {
         for (let j = i + 1; j < children.length; j++) {
           const c1 = children[i];
           const c2 = children[j];
-          const isDelegating = activeDelegations.some(
+          const delegation = activeDelegations.find(
             (d) =>
               (d.fromAgentId === c1.id && d.toAgentId === c2.id) ||
               (d.fromAgentId === c2.id && d.toAgentId === c1.id)
           );
+          const isDelegating = Boolean(delegation);
 
           edgesList.push({
             id: `sec-l2-${c1.id}-${c2.id}`,
@@ -163,6 +190,18 @@ export const GraphCanvasInner: React.FC = () => {
               active: isDelegating,
               isSecondary: true,
               label: `PEER · ${clusterName}`,
+              sourceColor: c1.color || '#64748b',
+              targetColor: c2.color || '#64748b',
+              trafficColor: delegation
+                ? (delegation.fromAgentId === c2.id ? c2.color : c1.color)
+                : undefined,
+              senderName: delegation
+                ? (delegation.fromAgentId === c2.id ? c2.name : c1.name)
+                : undefined,
+              receiverName: delegation
+                ? (delegation.toAgentId === c2.id ? c2.name : c1.name)
+                : undefined,
+              isReversed: delegation ? delegation.fromAgentId === c2.id : false,
             },
           });
         }
@@ -172,15 +211,38 @@ export const GraphCanvasInner: React.FC = () => {
     return edgesList;
   }, [agentList, activeDelegations]);
 
-  const [nodes, setNodes] = useNodesState(initialNodes);
-  const [edges, setEdges] = useEdgesState(initialEdges);
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
-  // Synchronize edges
+  // Synchronize edges efficiently
   useEffect(() => {
     setEdges(initialEdges);
   }, [initialEdges, setEdges]);
 
-  // Initialize Force-Directed Simulation
+  // Synchronize new/removed agents into nodes state
+  useEffect(() => {
+    setNodes((prevNodes) => {
+      const prevMap = new Map(prevNodes.map((n) => [n.id, n]));
+      return agentList.map((agent) => {
+        const existing = prevMap.get(agent.id);
+        if (existing) {
+          // Keep current position if already in state, just update data
+          return {
+            ...existing,
+            data: { agent },
+          };
+        }
+        return {
+          id: agent.id,
+          type: agent.role === 'orchestrator' ? 'orchestrator' : 'agent',
+          position: { x: agent.pos_x ?? 400, y: agent.pos_y ?? 300 },
+          data: { agent },
+        };
+      });
+    });
+  }, [agentList, setNodes]);
+
+  // Initialize Force-Directed Simulation only when agent count changes or reheat triggered
   useEffect(() => {
     if (!simulationRef.current) {
       simulationRef.current = new ObsidianForceSimulation(forceSettings);
@@ -201,6 +263,11 @@ export const GraphCanvasInner: React.FC = () => {
           prevNodes.map((pn) => {
             const sn = simNodes.find((n) => n.id === pn.id);
             if (!sn || !isFinite(sn.x as number) || !isFinite(sn.y as number)) return pn;
+            // Only update if movement is greater than 1.5px to prevent micro-jitters and save CPU
+            const dx = Math.abs((sn.x as number) - pn.position.x);
+            const dy = Math.abs((sn.y as number) - pn.position.y);
+            if (dx < 1.5 && dy < 1.5) return pn;
+
             return {
               ...pn,
               position: {
@@ -212,18 +279,46 @@ export const GraphCanvasInner: React.FC = () => {
         );
       },
       (finalNodes) => {
+        const batch: Array<{ id: string; x: number; y: number }> = [];
         finalNodes.forEach((fn) => {
           if (isFinite(fn.x as number) && isFinite(fn.y as number)) {
-            updateAgentPosition(fn.id, Math.round(fn.x as number), Math.round(fn.y as number));
+            batch.push({
+              id: fn.id,
+              x: Math.round(fn.x as number),
+              y: Math.round(fn.y as number),
+            });
           }
         });
+        if (batch.length > 0) {
+          updateAgentPositionsBatch(batch);
+        }
       }
     );
 
     return () => {
       simulationRef.current?.stop();
     };
-  }, [agentList.length]);
+  }, [agentList.length, updateAgentPositionsBatch]);
+
+  const handleResetLayout = () => {
+    resetPositionsToRadial();
+    const currentAgents = useAgentsStore.getState().agents;
+    const freshNodes: UnifiedNodeType[] = Object.values(currentAgents).map((agent) => ({
+      id: agent.id,
+      type: agent.role === 'orchestrator' ? 'orchestrator' : 'agent',
+      position: { x: agent.pos_x ?? 450, y: agent.pos_y ?? 300 },
+      data: { agent },
+    }));
+    setNodes(freshNodes);
+
+    if (simulationRef.current) {
+      simulationRef.current.reheat(0.15);
+    }
+
+    setTimeout(() => {
+      fitView({ duration: 400, padding: 0.25 });
+    }, 50);
+  };
 
   const handleUpdateForceSettings = (newSettings: Partial<ForceGraphSettings>) => {
     const updated = { ...forceSettings, ...newSettings };
@@ -264,41 +359,6 @@ export const GraphCanvasInner: React.FC = () => {
     [updateAgentPosition]
   );
 
-  const handleAddMockAgent = () => {
-    const nextIdx = agentList.filter((a) => a.role !== 'orchestrator').length + 1;
-    const newNames = ['Kimi', 'Noah', 'Veda', 'Zane', 'Astra', 'Echo', 'Mira', 'Dex'];
-    const chosenName = newNames[(nextIdx - 1) % newNames.length] + `-${nextIdx}`;
-
-    const candidateParents = ['rika', 'lia'];
-    const chosenParent = candidateParents[(nextIdx - 1) % candidateParents.length];
-    const parentAgent = agentList.find((a) => a.id === chosenParent);
-    const assignedColor = chosenParent === 'rika' ? '#f59e0b' : '#818cf8';
-
-    const newAgent: AgentDTO = {
-      id: `agent-${Date.now().toString(36)}`,
-      name: chosenName,
-      role: 'agent',
-      description: `Sub-agent tambahan (${chosenName}) melapor ke ${parentAgent?.name || 'Orchestrator'}.`,
-      model_label: 'deepseek-chat',
-      avatar_url: null,
-      status: 'online',
-      pos_x: 400 + (Math.random() - 0.5) * 160,
-      pos_y: 300 + (Math.random() - 0.5) * 160,
-      parent_id: chosenParent,
-      layer: 2,
-      color: assignedColor,
-      uptime: '99.9%',
-      active_tasks_count: 0,
-      created_at: Date.now(),
-    };
-
-    addAgent(newAgent);
-    setTimeout(() => {
-      handleReheatSimulation();
-      fitView({ duration: 350, padding: 0.2 });
-    }, 100);
-  };
-
   return (
     <div className="relative w-full h-full bg-[#0a0e14] overflow-hidden">
       {/* Clean Ambient Space Backdrop */}
@@ -332,24 +392,8 @@ export const GraphCanvasInner: React.FC = () => {
       {/* SIMPLE TOP-RIGHT CANVAS CONTROLS */}
       <div className="absolute top-3.5 right-3.5 z-20 flex items-center gap-2">
         <button
-          onClick={handleAddMockAgent}
-          title="Tambah Agent Baru"
-          aria-label="Tambah Agent"
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#161e28]/90 hover:bg-[#202936] text-white border border-white/15 text-xs font-mono shadow-md transition-all cursor-pointer backdrop-blur-md active:scale-95"
-        >
-          <UserPlus className="w-3.5 h-3.5 text-red-400" />
-          <span>+ Agent</span>
-        </button>
-
-        <button
-          onClick={() => {
-            resetPositionsToRadial();
-            setTimeout(() => {
-              handleReheatSimulation();
-              fitView({ duration: 350, padding: 0.2 });
-            }, 60);
-          }}
-          title="Reset Layout"
+          onClick={handleResetLayout}
+          title="Reset Layout ke Posisi Rapi"
           aria-label="Reset Layout"
           className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#161e28]/90 hover:bg-[#202936] text-gray-300 hover:text-white border border-white/15 text-xs font-mono shadow-md transition-all cursor-pointer backdrop-blur-md active:scale-95"
         >
@@ -400,10 +444,12 @@ export const GraphCanvasInner: React.FC = () => {
         </IconButton>
       </div>
 
-      {/* React Flow Core with Error Suppression */}
+      {/* React Flow Core with High-FPS Optimization */}
       <ReactFlow
         nodes={nodes}
         edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         onNodeDragStart={onNodeDragStart}
@@ -420,6 +466,12 @@ export const GraphCanvasInner: React.FC = () => {
         maxZoom={2.0}
         defaultEdgeOptions={{ type: 'delegation' }}
         proOptions={{ hideAttribution: true }}
+        elementsSelectable={true}
+        nodesDraggable={true}
+        nodesConnectable={false}
+        onlyRenderVisibleElements={true}
+        elevateNodesOnSelect={false}
+        elevateEdgesOnSelect={false}
         className="cursor-grab active:cursor-grabbing"
       />
     </div>

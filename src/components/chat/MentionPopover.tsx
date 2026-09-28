@@ -2,6 +2,7 @@ import React from 'react';
 import { useAgentsStore } from '../../stores/agents';
 import { AgentDTO } from '../../lib/schemas';
 import { cleanModelName } from '../../lib/format';
+import { AgentAvatar } from '../ui/AgentAvatar';
 
 interface MentionPopoverProps {
   filter: string;
@@ -36,13 +37,18 @@ export const MentionPopover: React.FC<MentionPopoverProps> = ({
             onClick={() => onSelect(agent)}
             className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-left text-xs font-mono text-gray-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
           >
-            <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center font-bold text-[10px] text-red-300 uppercase">
-              {agent.name.slice(0, 2)}
-            </div>
+            <AgentAvatar
+              agentId={agent.id}
+              role={agent.role}
+              name={agent.name}
+              avatarUrl={agent.avatar_url}
+              size={22}
+              color={agent.color}
+            />
             <div className="truncate">
               <span className="font-semibold text-white">@{agent.name}</span>
-              <span className="text-[10px] text-gray-500 block truncate">
-                {agent.role === 'orchestrator' ? 'Orchestrator' : cleanModelName(agent.model_label)}
+              <span className="text-[10px] text-gray-400 block truncate">
+                {agent.description || (agent.role === 'orchestrator' ? 'Orchestrator' : cleanModelName(agent.model_label))}
               </span>
             </div>
           </button>

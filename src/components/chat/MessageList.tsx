@@ -31,10 +31,14 @@ export const MessageList: React.FC<MessageListProps> = ({
 
   const scrollToBottom = (smooth = true) => {
     if (!containerRef.current) return;
-    containerRef.current.scrollTo({
-      top: containerRef.current.scrollHeight,
-      behavior: smooth ? 'smooth' : 'auto',
-    });
+    if (typeof containerRef.current.scrollTo === 'function') {
+      containerRef.current.scrollTo({
+        top: containerRef.current.scrollHeight,
+        behavior: smooth ? 'smooth' : 'auto',
+      });
+    } else {
+      containerRef.current.scrollTop = containerRef.current.scrollHeight;
+    }
     setShowScrollBottomPill(false);
     isNearBottomRef.current = true;
   };

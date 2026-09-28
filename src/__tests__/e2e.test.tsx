@@ -19,8 +19,12 @@ describe('E2E Testing: Hermes Multi-Agent Chat & Orchestration Suite', () => {
       chatCollapsed: false,
       chatWidth: 420,
       inspectorOpen: false,
-      selectedAgentId: null,
+      inspectorAgentId: null,
       sidebarCollapsed: false,
+    });
+    useChatStore.setState({
+      isStreaming: false,
+      activeRunId: null,
     });
     localStorage.clear();
   });
@@ -383,15 +387,15 @@ describe('E2E Testing: Hermes Multi-Agent Chat & Orchestration Suite', () => {
       useUiStore.getState().openInspector('rika', 'overview');
 
       expect(useUiStore.getState().inspectorOpen).toBe(true);
-      expect(useUiStore.getState().selectedAgentId).toBe('rika');
+      expect(useUiStore.getState().inspectorAgentId).toBe('rika');
 
       // Switch to Logs tab
       useUiStore.getState().setInspectorTab('logs');
       expect(useUiStore.getState().inspectorTab).toBe('logs');
 
-      // Switch to Tools tab
-      useUiStore.getState().setInspectorTab('tools');
-      expect(useUiStore.getState().inspectorTab).toBe('tools');
+      // Switch to Tasks tab
+      useUiStore.getState().setInspectorTab('tasks');
+      expect(useUiStore.getState().inspectorTab).toBe('tasks');
 
       // Close inspector
       useUiStore.getState().closeInspector();

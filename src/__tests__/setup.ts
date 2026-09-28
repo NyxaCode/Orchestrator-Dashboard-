@@ -27,4 +27,9 @@ if (typeof window !== 'undefined') {
   if (!Element.prototype.scrollIntoView) {
     Element.prototype.scrollIntoView = function () {};
   }
+
+  // Polyfill scrollTo
+  if (!Element.prototype.scrollTo) {
+    Element.prototype.scrollTo = function () {};
+  }
 }

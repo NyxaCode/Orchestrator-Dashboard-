@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { AppShell } from './components/shell/AppShell';
+import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import { useUiStore } from './stores/ui';
 import { useAgentsStore } from './stores/agents';
 import { getAdapter } from './server/adapters';
@@ -50,5 +51,9 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [toggleSidebar, toggleChat, closeInspector, inspectorOpen]);
 
-  return <AppShell />;
+  return (
+    <ErrorBoundary fallbackTitle="DM Mission Control Error">
+      <AppShell />
+    </ErrorBoundary>
+  );
 }

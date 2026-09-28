@@ -26,16 +26,54 @@ export const AgentSchema = z.object({
 });
 export type AgentDTO = z.infer<typeof AgentSchema>;
 
+export const SubProjectSchema = z.object({
+  id: z.string().min(1),
+  project_id: z.string().min(1),
+  name: z.string().min(1),
+  description: z.string().optional().default(''),
+  lead_agent_id: z.string().optional().nullable(),
+  tasks_count: z.number().default(0),
+  created_at: z.number(),
+});
+export type SubProjectDTO = z.infer<typeof SubProjectSchema>;
+
 export const ProjectSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
   description: z.string().optional().default(''),
   archived: z.number().default(0),
   agent_ids: z.array(z.string()).default([]),
+  sub_projects: z.array(SubProjectSchema).optional().default([]),
   active_tasks_count: z.number().default(0),
   created_at: z.number(),
 });
 export type ProjectDTO = z.infer<typeof ProjectSchema>;
+
+export const KanbanColumnIdSchema = z.enum(['backlog', 'ready', 'in_progress', 'review', 'done']);
+export type KanbanColumnId = z.infer<typeof KanbanColumnIdSchema>;
+
+export const KanbanPrioritySchema = z.enum(['low', 'medium', 'high', 'critical']);
+export type KanbanPriority = z.infer<typeof KanbanPrioritySchema>;
+
+export const KanbanTaskSchema = z.object({
+  id: z.string().min(1),
+  project_id: z.string().min(1),
+  sub_project_id: z.string().optional().nullable(),
+  title: z.string().min(1),
+  description: z.string().default(''),
+  column_id: KanbanColumnIdSchema.default('backlog'),
+  priority: KanbanPrioritySchema.default('medium'),
+  assigned_agent_id: z.string().optional().nullable(),
+  tags: z.array(z.string()).default([]),
+  skills: z.array(z.string()).default([]),
+  tools: z.array(z.string()).default([]),
+  prompt_context: z.string().default(''),
+  output_artifact: z.string().optional().nullable(),
+  created_by: z.string().default('operator'),
+  created_at: z.number(),
+  updated_at: z.number(),
+});
+export type KanbanTaskDTO = z.infer<typeof KanbanTaskSchema>;
 
 export const MessageRoleSchema = z.enum(['user', 'orchestrator', 'agent', 'system']);
 export type MessageRole = z.infer<typeof MessageRoleSchema>;

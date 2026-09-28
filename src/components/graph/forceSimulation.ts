@@ -172,13 +172,21 @@ export class ObsidianForceSimulation {
         'collide',
         forceCollide<ForceNode>()
           .radius((d) => d.radius + this.settings.collisionPadding)
-          .iterations(2)
+          .iterations(1)
       )
-      .velocityDecay(0.4)
-      .alphaDecay(0.03);
+      .velocityDecay(0.55)
+      .alphaDecay(0.07)
+      .alphaMin(0.02);
 
+    let tickCount = 0;
     this.simulation.on('tick', () => {
       if (!this.onTickCallback) return;
+      // Skip every other tick to halve React reconciliation cost (30fps updates)
+      tickCount++;
+      if (tickCount % 2 !== 0 && this.simulation && this.simulation.alpha() > 0.05) {
+        return;
+      }
+
       if (this.animFrameId !== null) return;
       this.animFrameId = requestAnimationFrame(() => {
         this.animFrameId = null;
