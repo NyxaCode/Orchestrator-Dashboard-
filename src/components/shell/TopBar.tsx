@@ -3,17 +3,14 @@ import { useProjectsStore } from '../../stores/projects';
 import { useUiStore } from '../../stores/ui';
 import { useChatStore } from '../../stores/chat';
 import { getCurrentAdapterType } from '../../server/adapters';
+import { AddAgentModal } from '../graph/AddAgentModal';
 import {
-  Layers,
-  Undo2,
-  Redo2,
   Settings,
-  ChevronDown,
-  Shield,
-  Activity,
   Menu,
   Network,
   Kanban,
+  UserPlus,
+  HelpCircle,
 } from 'lucide-react';
 import { IconButton } from '../ui/IconButton';
 import { cn } from '../../lib/cn';
@@ -28,13 +25,14 @@ export const TopBar: React.FC = () => {
   const toggleSidebar = useUiStore((s) => s.toggleSidebar);
   const sseStatus = useChatStore((s) => s.sseStatus);
 
-  const [showViewDropdown, setShowViewDropdown] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showAddAgentModal, setShowAddAgentModal] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState(false);
   const adapterType = getCurrentAdapterType();
 
   return (
     <header className="h-12 border-b border-white/10 bg-[#121820] px-3.5 flex items-center justify-between select-none shrink-0 z-30">
-      {/* Left Zone: Brand + Breadcrumb */}
+      {/* Zone 1: Brand & Breadcrumb */}
       <div className="flex items-center gap-3 min-w-0">
         <IconButton
           aria-label="Toggle Sidebar"
@@ -47,11 +45,11 @@ export const TopBar: React.FC = () => {
         </IconButton>
 
         {/* Logo DMC */}
-        <div className="flex items-center gap-1.5 shrink-0">
-          <div className="w-6 h-6 rounded-md bg-red-600 flex items-center justify-center shadow-[0_0_12px_rgba(220,38,38,0.6)]">
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="w-6 h-6 rounded-md bg-red-600 flex items-center justify-center shadow-[0_0_12px_rgba(220,38,38,0.5)]">
             <span className="font-mono font-bold text-xs text-white tracking-tighter">DM</span>
           </div>
-          <span className="text-sm font-bold tracking-tight text-white hidden sm:inline">
+          <span className="text-sm font-bold tracking-tight text-white hidden sm:inline font-sans">
             Mission Control
           </span>
         </div>
@@ -67,10 +65,9 @@ export const TopBar: React.FC = () => {
         </div>
       </div>
 
-      {/* Middle Zone: View Selector & Ornaments */}
-      <div className="flex items-center gap-2">
-        {/* Quick View Segmented Tabs: [Graph] [Kanban] */}
-        <div className="flex items-center p-0.5 rounded-lg bg-[#0e141c] border border-white/10 shadow-xs">
+      {/* Zone 2: View Switcher (Clean Segmented Tabs: Graph & Kanban) */}
+      <div className="flex items-center">
+        <div className="flex items-center p-0.5 rounded-lg bg-[#0a0e14] border border-white/10 shadow-inner">
           <button
             type="button"
             onClick={() => setViewMode('graph')}
@@ -82,7 +79,7 @@ export const TopBar: React.FC = () => {
             )}
           >
             <Network className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Graph</span>
+            <span>Graph Canvas</span>
           </button>
 
           <button
@@ -96,81 +93,39 @@ export const TopBar: React.FC = () => {
             )}
           >
             <Kanban className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Kanban</span>
+            <span>Kanban Board</span>
           </button>
-        </div>
-
-        {/* VIEW ▾ Pill Selector for Full Options */}
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setShowViewDropdown(!showViewDropdown)}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#161e28] hover:bg-[#1a232e] text-xs font-mono text-gray-300 border border-white/15 shadow-xs transition-colors cursor-pointer"
-          >
-            <Layers className="w-3 h-3 text-red-400" />
-            <span className="uppercase hidden md:inline">{viewMode}</span>
-            <ChevronDown className="w-3 h-3 text-gray-400" />
-          </button>
-
-          {showViewDropdown && (
-            <div className="absolute top-full mt-1.5 left-0 z-40 w-44 rounded-lg glass-panel border border-white/15 p-1 shadow-2xl animate-in fade-in zoom-in-95 duration-100">
-              <button
-                type="button"
-                onClick={() => {
-                  setViewMode('graph');
-                  setShowViewDropdown(false);
-                }}
-                className={`w-full text-left px-2.5 py-1.5 rounded text-xs font-mono transition-colors cursor-pointer ${
-                  viewMode === 'graph' ? 'bg-red-950/60 text-white font-bold' : 'text-gray-300 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                ● Radial Graph
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setViewMode('kanban');
-                  setShowViewDropdown(false);
-                }}
-                className={`w-full text-left px-2.5 py-1.5 rounded text-xs font-mono transition-colors cursor-pointer ${
-                  viewMode === 'kanban' ? 'bg-red-950/60 text-white font-bold' : 'text-gray-300 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                ● Kanban Board
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setViewMode('list');
-                  setShowViewDropdown(false);
-                }}
-                className={`w-full text-left px-2.5 py-1.5 rounded text-xs font-mono transition-colors cursor-pointer ${
-                  viewMode === 'list' ? 'bg-red-950/60 text-white font-bold' : 'text-gray-300 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                ● Agent List
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Undo / Redo (Disabled Ornaments per Phase 1 spec) */}
-        <div className="hidden lg:flex items-center gap-0.5 opacity-40">
-          <IconButton aria-label="Undo" size="sm" disabled>
-            <Undo2 className="w-3.5 h-3.5" />
-          </IconButton>
-          <IconButton aria-label="Redo" size="sm" disabled>
-            <Redo2 className="w-3.5 h-3.5" />
-          </IconButton>
         </div>
       </div>
 
-      {/* Right Zone: SSE Live Status & Settings */}
-      <div className="flex items-center gap-2.5">
-        {/* SSE Indicator */}
+      {/* Zone 3: Quick Actions, Live Status & Settings */}
+      <div className="flex items-center gap-2">
+        {/* + Add Agent CTA Button */}
+        <button
+          type="button"
+          onClick={() => setShowAddAgentModal(true)}
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-600/15 hover:bg-red-600/25 border border-red-500/40 text-red-200 hover:text-white text-xs font-mono transition-colors cursor-pointer"
+          title="Tambah Sub-Agent ke Graf"
+        >
+          <UserPlus className="w-3.5 h-3.5 text-red-400" />
+          <span className="hidden md:inline">+ Add Agent</span>
+        </button>
+
+        {/* Quick Guide / Onboarding Button */}
+        <button
+          type="button"
+          onClick={() => setShowHelpModal(true)}
+          className="flex items-center gap-1 px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white text-xs font-mono border border-white/10 transition-colors cursor-pointer"
+          title="Panduan Penggunaan Singkat"
+        >
+          <HelpCircle className="w-3.5 h-3.5 text-amber-400" />
+          <span className="hidden lg:inline">Bantuan</span>
+        </button>
+
+        {/* SSE Live Status Indicator */}
         <div
           className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#161e28] border border-white/10 text-[11px] font-mono select-none"
-          title="Status Koneksi SSE & Gateway Telemetri"
+          title="Status Koneksi Telemetri"
         >
           {sseStatus === 'live' ? (
             <>
@@ -185,13 +140,7 @@ export const TopBar: React.FC = () => {
           )}
         </div>
 
-        {/* Adapter Tag */}
-        <div className="hidden xl:flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded bg-white/5 border border-white/10 text-gray-400">
-          <span>ADAPTER:</span>
-          <span className="text-white font-semibold uppercase">{adapterType}</span>
-        </div>
-
-        {/* Gear / Settings */}
+        {/* Settings */}
         <IconButton
           aria-label="Pengaturan sistem"
           size="sm"
@@ -202,6 +151,60 @@ export const TopBar: React.FC = () => {
           <Settings className="w-4 h-4" />
         </IconButton>
       </div>
+
+      {/* Add Agent Modal */}
+      <AddAgentModal
+        isOpen={showAddAgentModal}
+        onClose={() => setShowAddAgentModal(false)}
+      />
+
+      {/* Quick Help / Onboarding Modal */}
+      {showHelpModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs select-none">
+          <div className="w-full max-w-md rounded-2xl bg-[#0e141d] border border-white/15 p-5 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-white/10">
+              <div className="flex items-center gap-2">
+                <HelpCircle className="w-4 h-4 text-amber-400" />
+                <h3 className="text-sm font-semibold text-white">Panduan Navigasi & UX DMC</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowHelpModal(false)}
+                className="text-gray-400 hover:text-white text-xs font-mono cursor-pointer"
+              >
+                [ESC]
+              </button>
+            </div>
+            <div className="space-y-3 text-xs text-gray-300 font-sans leading-relaxed">
+              <div className="p-2.5 rounded-lg bg-white/5 border border-white/10 space-y-1">
+                <span className="font-semibold text-white block">1. Graf Orkestrasi Radial</span>
+                <p className="text-gray-400">
+                  Node merah di pusat adalah <strong>Shinaa (Orchestrator Lead)</strong>. Arahkan mouse ke node agen untuk melihat tombol cepat (Chat atau Log). Klik node mana pun untuk membuka panel Inspector.
+                </p>
+              </div>
+              <div className="p-2.5 rounded-lg bg-white/5 border border-white/10 space-y-1">
+                <span className="font-semibold text-white block">2. Chat & Pendelegasian Tugas</span>
+                <p className="text-gray-400">
+                  Kirim pesan ke Shinaa untuk pendelegasian otomatis. Gunakan <code>@nama_agent</code> untuk menargetkan agen tertentu, atau ketik <code>/</code> untuk menampilkan daftar perintah seperti <code>/simulate-error</code>, <code>/plan</code>, dan <code>/status</code>.
+                </p>
+              </div>
+              <div className="p-2.5 rounded-lg bg-white/5 border border-white/10 space-y-1">
+                <span className="font-semibold text-white block">3. Manajemen Task Kanban</span>
+                <p className="text-gray-400">
+                  Beralih ke tab <strong>Kanban Board</strong> untuk melihat antrian tugas yang sedang berjalan atau sudah selesai dikerjakan oleh para agen.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowHelpModal(false)}
+              className="w-full py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-mono text-xs cursor-pointer"
+            >
+              Mengerti, Lanjutkan
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Settings Modal (Info / Tailscale / Config) */}
       {showSettingsModal && (
@@ -219,20 +222,20 @@ export const TopBar: React.FC = () => {
             </div>
             <div className="space-y-2 text-xs font-mono text-gray-300">
               <div className="flex justify-between py-1 border-b border-white/5">
-                <span className="text-gray-500">Versi:</span>
-                <span className="text-white">Phase 1 (Dashboard + Mock Adapter)</span>
+                <span className="text-gray-500">Mode Sistem:</span>
+                <span className="text-white">Simulasi Mockup Interaktif</span>
               </div>
               <div className="flex justify-between py-1 border-b border-white/5">
                 <span className="text-gray-500">Gateway:</span>
                 <span className="text-white">9router Model Bridge</span>
               </div>
               <div className="flex justify-between py-1 border-b border-white/5">
-                <span className="text-gray-500">Akses Jaringan:</span>
-                <span className="text-emerald-400">Tailscale Internal Mesh</span>
+                <span className="text-gray-500">Adapter Aktif:</span>
+                <span className="text-emerald-400 uppercase font-bold">{adapterType}</span>
               </div>
               <div className="flex justify-between py-1 border-b border-white/5">
-                <span className="text-gray-500">Target Phase 2:</span>
-                <span className="text-red-400">Hermes Agent Socket & Dynamic Tools</span>
+                <span className="text-gray-500">Akses Jaringan:</span>
+                <span className="text-emerald-400">Tailscale & LAN (0.0.0.0:3000)</span>
               </div>
             </div>
             <button

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   ArrowUp,
   Square,
@@ -16,7 +16,7 @@ import {
 import { useChatStore, HermesMode, ThinkingLevel } from '../../stores/chat';
 import { useAgentsStore } from '../../stores/agents';
 import { MentionPopover } from './MentionPopover';
-import { HermesCommandPopover, HermesCommand } from './HermesCommandPopover';
+import { HermesCommandPopover, HermesCommand, HERMES_COMMANDS } from './HermesCommandPopover';
 import { AgentDTO } from '../../lib/schemas';
 import { extractAllMentions } from '../../lib/sanitize';
 
@@ -72,6 +72,7 @@ export const Composer: React.FC<ComposerProps> = ({
   const [content, setContent] = useState('');
   const [mentionFilter, setMentionFilter] = useState<string | null>(null);
   const [commandFilter, setCommandFilter] = useState<string | null>(null);
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
   const [attachments, setAttachments] = useState<ComposerAttachment[]>([]);
 
   // Popover menus state (pure text dropdowns)
@@ -114,6 +115,28 @@ export const Composer: React.FC<ComposerProps> = ({
   const agentList = Object.values(agents || {});
   const targetAgent = targetAgentId && agents ? agents[targetAgentId] : null;
 
+  // Filtered items for keyboard navigation and Tab selection
+  const matchedAgents = useMemo(() => {
+    if (mentionFilter === null) return [];
+    return agentList.filter(
+      (a) =>
+        a.name.toLowerCase().includes(mentionFilter.toLowerCase()) ||
+        a.id.toLowerCase().includes(mentionFilter.toLowerCase())
+    );
+  }, [mentionFilter, agentList]);
+
+  const matchedCommands = useMemo(() => {
+    if (commandFilter === null) return [];
+    const cleanFilter = commandFilter.toLowerCase().replace(/^\//, '');
+    return HERMES_COMMANDS.filter((cmd) => {
+      if (!cleanFilter) return true;
+      return (
+        cmd.command.toLowerCase().includes(cleanFilter) ||
+        cmd.description.toLowerCase().includes(cleanFilter)
+      );
+    });
+  }, [commandFilter]);
+
   // Short label for model display button
   const currentModelMeta = HERMES_MODELS.find((m) => m.id === hermesModel);
   const modelShortDisplay = targetAgent
@@ -151,6 +174,50 @@ export const Composer: React.FC<ComposerProps> = ({
       return;
     }
 
+    // Keyboard navigation & Tab selection for @mentions (VS Code style)
+    if (mentionFilter !== null && matchedAgents.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setHighlightedIndex((prev) => (prev + 1) % matchedAgents.length);
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setHighlightedIndex((prev) => (prev - 1 + matchedAgents.length) % matchedAgents.length);
+        return;
+      }
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        const selected = matchedAgents[highlightedIndex] || matchedAgents[0];
+        if (selected) {
+          handleSelectMention(selected);
+        }
+        return;
+      }
+    }
+
+    // Keyboard navigation & Tab selection for /commands (VS Code style)
+    if (commandFilter !== null && matchedCommands.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setHighlightedIndex((prev) => (prev + 1) % matchedCommands.length);
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setHighlightedIndex((prev) => (prev - 1 + matchedCommands.length) % matchedCommands.length);
+        return;
+      }
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        const selected = matchedCommands[highlightedIndex] || matchedCommands[0];
+        if (selected) {
+          handleSelectCommand(selected);
+        }
+        return;
+      }
+    }
+
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit();
@@ -170,6 +237,7 @@ export const Composer: React.FC<ComposerProps> = ({
       const slashWord = textBefore.split(/\s+/)[0];
       setCommandFilter(slashWord);
       setMentionFilter(null);
+      setHighlightedIndex(0);
       return;
     } else {
       setCommandFilter(null);
@@ -181,6 +249,7 @@ export const Composer: React.FC<ComposerProps> = ({
       const query = textBefore.slice(lastAt + 1);
       if (!/\s/.test(query)) {
         setMentionFilter(query);
+        setHighlightedIndex(0);
         return;
       }
     }
@@ -271,6 +340,8 @@ export const Composer: React.FC<ComposerProps> = ({
       {commandFilter !== null && (
         <HermesCommandPopover
           filter={commandFilter}
+          activeIndex={highlightedIndex}
+          onHoverIndex={setHighlightedIndex}
           onSelectCommand={handleSelectCommand}
           onClose={() => setCommandFilter(null)}
         />
@@ -280,6 +351,8 @@ export const Composer: React.FC<ComposerProps> = ({
       {mentionFilter !== null && (
         <MentionPopover
           filter={mentionFilter}
+          activeIndex={highlightedIndex}
+          onHoverIndex={setHighlightedIndex}
           onSelect={handleSelectMention}
           onClose={() => setMentionFilter(null)}
         />
@@ -340,7 +413,7 @@ export const Composer: React.FC<ComposerProps> = ({
       )}
 
       {/* HERMES COMPOSER CARD */}
-      <div className="relative rounded-2xl bg-[#090d13] border border-amber-400/80 focus-within:border-yellow-400 focus-within:shadow-[0_0_12px_rgba(245,158,11,0.2)] transition-all flex flex-col p-2 gap-1.5">
+      <div className="relative rounded-xl bg-[#090d13] border border-white/15 focus-within:border-red-500/70 focus-within:shadow-[0_0_12px_rgba(220,38,38,0.2)] transition-all flex flex-col p-2.5 gap-1.5">
         {/* Hidden File Input */}
         <input
           ref={fileInputRef}
@@ -357,9 +430,9 @@ export const Composer: React.FC<ComposerProps> = ({
           value={content}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
-          placeholder="Message Hermes..."
+          placeholder="Message Hermes... (ketik @ untuk mention agent, / untuk command)"
           disabled={disabled}
-          className="w-full bg-transparent text-xs text-white placeholder-gray-400 resize-none outline-none max-h-[140px] px-1 font-sans leading-relaxed"
+          className="w-full bg-transparent text-xs text-white placeholder-gray-500 resize-none outline-none max-h-[140px] px-1 font-sans leading-relaxed"
         />
 
         {/* BOTTOM COMPACT TOOLBAR (Mode, Model, Thinking - Pure Text Dropdowns!) */}

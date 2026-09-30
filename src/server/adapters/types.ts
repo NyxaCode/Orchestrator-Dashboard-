@@ -24,4 +24,5 @@ export interface AgentAdapter {
   sendMessage(input: SendMessageInput): AsyncIterable<AdapterEvent>;
   cancel(runId: string): Promise<void>;
   subscribe(onEvent: (e: AdapterEvent) => void): () => void;
+  syncAgents?(agents: Record<string, AgentDTO> | Map<string, AgentDTO>): void;
 }

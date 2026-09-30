@@ -137,6 +137,7 @@ export const ChatPanel: React.FC = () => {
     }
 
     const adapter = getAdapter();
+    adapter.syncAgents?.(agents);
     const userMsgId = `usr_${Date.now()}`;
     const clientMsgId = `c_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
 

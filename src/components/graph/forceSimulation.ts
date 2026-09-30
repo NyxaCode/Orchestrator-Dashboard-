@@ -27,20 +27,20 @@ export interface ForceLink extends SimulationLinkDatum<ForceNode> {
 }
 
 export interface ForceGraphSettings {
-  centerForce: number;      // 0.02 - 0.20 (default: 0.08)
-  repelForce: number;       // -300 to -1200 (default: -700)
-  linkDistance: number;     // 120 - 280 (default: 180)
-  linkForce: number;        // default: 0.6
-  collisionPadding: number; // default: 40
+  centerForce: number;      // 0.02 - 0.20 (default: 0.04)
+  repelForce: number;       // -300 to -1200 (default: -480)
+  linkDistance: number;     // 120 - 280 (default: 175)
+  linkForce: number;        // default: 0.65
+  collisionPadding: number; // default: 28
   livePhysics: boolean;
 }
 
 export const DEFAULT_FORCE_SETTINGS: ForceGraphSettings = {
-  centerForce: 0.08,
-  repelForce: -700,
-  linkDistance: 180,
-  linkForce: 0.6,
-  collisionPadding: 40,
+  centerForce: 0.04,
+  repelForce: -480,
+  linkDistance: 175,
+  linkForce: 0.65,
+  collisionPadding: 28,
   livePhysics: true,
 };
 
@@ -54,11 +54,16 @@ export class ObsidianForceSimulation {
   private centerX = 400;
   private centerY = 300;
   private animFrameId: number | null = null;
+  private activeDraggingId: string | null = null;
 
   constructor(settings?: Partial<ForceGraphSettings>) {
     if (settings) {
       this.settings = { ...DEFAULT_FORCE_SETTINGS, ...settings };
     }
+  }
+
+  public getActiveDraggingId(): string | null {
+    return this.activeDraggingId;
   }
 
   public setCenter(x: number, y: number) {
@@ -86,32 +91,35 @@ export class ObsidianForceSimulation {
     const charge = this.simulation.force('charge') as any;
     if (charge) {
       charge.strength((d: ForceNode) =>
-        d.role === 'orchestrator' ? this.settings.repelForce * 1.4 : this.settings.repelForce
+        d.role === 'orchestrator' ? this.settings.repelForce * 1.5 : this.settings.repelForce
       );
     }
 
     const link = this.simulation.force('link') as any;
     if (link) {
-      link.strength(this.settings.linkForce);
+      link.strength((l: ForceLink) =>
+        l.isSecondary ? this.settings.linkForce * 0.4 : this.settings.linkForce
+      );
       link.distance((l: ForceLink) =>
-        l.isSecondary ? this.settings.linkDistance * 0.8 : this.settings.linkDistance
+        l.isSecondary ? this.settings.linkDistance * 1.3 : this.settings.linkDistance
       );
     }
 
-    this.reheat(0.4);
+    this.reheat(0.3);
   }
 
   public init(
     agents: AgentDTO[],
     links: Array<{ id: string; source: string; target: string; isSecondary: boolean }>,
     onTick: (nodes: ForceNode[]) => void,
-    onEnd?: (nodes: ForceNode[]) => void
+    onEnd?: (nodes: ForceNode[]) => void,
+    autoStart = false
   ) {
     this.stop();
     this.onTickCallback = onTick;
     this.onEndCallback = onEnd || null;
 
-    // Convert agents to simulation nodes with validated finite coordinates
+    // Convert agents to simulation nodes with validated coordinates
     this.nodes = agents.map((a) => {
       const existing = this.nodes.find((n) => n.id === a.id);
       const isOrchestrator = a.role === 'orchestrator';
@@ -132,13 +140,13 @@ export class ObsidianForceSimulation {
         role: a.role,
         layer: a.layer ?? (isOrchestrator ? 0 : 1),
         color: a.color,
-        radius: isOrchestrator ? 38 : 34,
+        radius: isOrchestrator ? 36 : 32,
         x: initialX,
         y: initialY,
         vx: 0,
         vy: 0,
-        fx: isOrchestrator ? this.centerX : undefined,
-        fy: isOrchestrator ? this.centerY : undefined,
+        fx: isOrchestrator ? initialX : undefined,
+        fy: isOrchestrator ? initialY : undefined,
       };
     });
 
@@ -149,24 +157,32 @@ export class ObsidianForceSimulation {
       isSecondary: l.isSecondary,
     }));
 
+    // Obsidian Physics Engine:
+    // 1. Center Gravity keeps the star clustered without drifting away
+    // 2. Many-Body Coulomb Repulsion pushes nodes apart
+    // 3. Hooke's Elastic Spring Force holds the star constellation together
+    // 4. Elastic collision prevention prevents node overlap
+    // 5. Velocity Decay (0.42) produces bouncy, organic spring follow
     this.simulation = forceSimulation<ForceNode, ForceLink>(this.nodes)
       .force('center', forceCenter(this.centerX, this.centerY).strength(this.settings.centerForce))
       .force(
         'charge',
         forceManyBody<ForceNode>()
           .strength((d) =>
-            d.role === 'orchestrator' ? this.settings.repelForce * 1.4 : this.settings.repelForce
+            d.role === 'orchestrator' ? this.settings.repelForce * 1.5 : this.settings.repelForce
           )
-          .distanceMax(900)
+          .distanceMax(800)
       )
       .force(
         'link',
         forceLink<ForceNode, ForceLink>(this.links)
           .id((d) => d.id)
           .distance((l) =>
-            l.isSecondary ? this.settings.linkDistance * 0.8 : this.settings.linkDistance
+            l.isSecondary ? this.settings.linkDistance * 1.3 : this.settings.linkDistance
           )
-          .strength(this.settings.linkForce)
+          .strength((l) =>
+            l.isSecondary ? this.settings.linkForce * 0.4 : this.settings.linkForce
+          )
       )
       .force(
         'collide',
@@ -174,25 +190,31 @@ export class ObsidianForceSimulation {
           .radius((d) => d.radius + this.settings.collisionPadding)
           .iterations(1)
       )
-      .velocityDecay(0.55)
-      .alphaDecay(0.07)
-      .alphaMin(0.02);
+      .velocityDecay(0.42)
+      .alphaDecay(0.05)
+      .alphaMin(0.005);
 
-    let tickCount = 0;
+    this.setupListeners();
+
+    if (!autoStart) {
+      // Don't auto-run continuously on initial load, nodes are neatly initialized
+      this.simulation.stop();
+    }
+  }
+
+  private setupListeners() {
+    if (!this.simulation) return;
+
     this.simulation.on('tick', () => {
       if (!this.onTickCallback) return;
-      // Skip every other tick to halve React reconciliation cost (30fps updates)
-      tickCount++;
-      if (tickCount % 2 !== 0 && this.simulation && this.simulation.alpha() > 0.05) {
-        return;
-      }
-
       if (this.animFrameId !== null) return;
+
       this.animFrameId = requestAnimationFrame(() => {
         this.animFrameId = null;
         if (this.onTickCallback) {
-          // Filter to ensure finite numbers
-          const safeNodes = this.nodes.filter((n) => isFinite(n.x as number) && isFinite(n.y as number));
+          const safeNodes = this.nodes.filter(
+            (n) => isFinite(n.x as number) && isFinite(n.y as number)
+          );
           this.onTickCallback(safeNodes);
         }
       });
@@ -204,27 +226,32 @@ export class ObsidianForceSimulation {
         this.animFrameId = null;
       }
       if (this.onEndCallback) {
-        const safeNodes = this.nodes.filter((n) => isFinite(n.x as number) && isFinite(n.y as number));
+        const safeNodes = this.nodes.filter(
+          (n) => isFinite(n.x as number) && isFinite(n.y as number)
+        );
         this.onEndCallback(safeNodes);
       }
     });
   }
 
-  public reheat(alpha = 0.5) {
+  public reheat(alpha = 0.3) {
     if (this.simulation) {
+      this.setupListeners();
       this.simulation.alpha(alpha).restart();
     }
   }
 
   public onDragStart(nodeId: string, x: number, y: number) {
-    if (!this.simulation || !isFinite(x) || !isFinite(y)) return;
+    this.activeDraggingId = nodeId;
     const node = this.nodes.find((n) => n.id === nodeId);
-    if (node) {
+    if (node && isFinite(x) && isFinite(y)) {
       node.fx = x;
       node.fy = y;
-      if (this.settings.livePhysics) {
-        this.simulation.alphaTarget(0.3).restart();
-      }
+    }
+    // Reheat simulation actively during drag so springs pull neighboring nodes
+    if (this.simulation) {
+      this.setupListeners();
+      this.simulation.alphaTarget(0.3).restart();
     }
   }
 
@@ -234,28 +261,41 @@ export class ObsidianForceSimulation {
     if (node) {
       node.fx = x;
       node.fy = y;
+      node.x = x;
+      node.y = y;
+    }
+    // Maintain active physics energy while moving
+    if (this.simulation && this.simulation.alpha() < 0.25) {
+      this.simulation.alphaTarget(0.3).restart();
     }
   }
 
   public onDragEnd(nodeId: string, finalX: number, finalY: number) {
+    this.activeDraggingId = null;
     const node = this.nodes.find((n) => n.id === nodeId);
     if (node) {
       if (node.role === 'orchestrator') {
         node.fx = isFinite(finalX) ? finalX : this.centerX;
         node.fy = isFinite(finalY) ? finalY : this.centerY;
+        if (isFinite(finalX)) node.x = finalX;
+        if (isFinite(finalY)) node.y = finalY;
       } else {
+        // Elastic release: clear fx, fy so springs settle organically into equilibrium
         node.fx = null;
         node.fy = null;
         if (isFinite(finalX)) node.x = finalX;
         if (isFinite(finalY)) node.y = finalY;
       }
-      if (this.simulation) {
-        this.simulation.alphaTarget(0);
-      }
+    }
+    if (this.simulation) {
+      // Release target alpha so simulation dampens smoothly to rest
+      this.simulation.alphaTarget(0);
+      this.simulation.alpha(0.18).restart();
     }
   }
 
   public stop() {
+    this.activeDraggingId = null;
     if (this.animFrameId !== null) {
       cancelAnimationFrame(this.animFrameId);
       this.animFrameId = null;

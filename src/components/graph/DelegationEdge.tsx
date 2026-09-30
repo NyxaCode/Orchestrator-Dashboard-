@@ -123,36 +123,16 @@ export const DelegationEdge = memo(
           markerEnd={markerEnd}
         />
 
-        {/* Active Traffic Animation (Smooth pulsing packets) */}
+        {/* Active Traffic Animation (GPU-Accelerated CSS Flow) */}
         {isActive && (
-          <>
-            <circle
-              r={4}
-              fill="#ffffff"
-              stroke={trafficColor}
-              strokeWidth={1.5}
-            >
-              <animateMotion
-                path={motionPath}
-                dur="1.2s"
-                repeatCount="indefinite"
-                rotate="auto"
-              />
-            </circle>
-            <circle
-              r={2.5}
-              fill={trafficColor}
-              opacity="0.8"
-            >
-              <animateMotion
-                path={motionPath}
-                dur="1.2s"
-                begin="0.4s"
-                repeatCount="indefinite"
-                rotate="auto"
-              />
-            </circle>
-          </>
+          <path
+            d={edgePath}
+            fill="none"
+            stroke={trafficColor}
+            strokeWidth={3}
+            strokeDasharray="8 6"
+            className="edge-traffic-stream"
+          />
         )}
 
         {/* Minimal Label only when active or selected or secondary */}

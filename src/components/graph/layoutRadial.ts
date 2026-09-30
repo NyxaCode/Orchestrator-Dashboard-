@@ -33,17 +33,17 @@ export function layoutRadial(
   const agents: Point[] = [];
 
   // When standard 6 sub-agents are present (Rika, Lia, Momo, Cody, Aria, Sonix):
+  // Forms a breathtaking celestial Star Constellation with Shinaa at center
   if (n === 6) {
-    // Symmetrical hierarchical layout
     return {
       orchestrator,
       agents: [
-        { x: centerX - 210, y: centerY - 85 }, // Rika (L1 Left)
-        { x: centerX + 210, y: centerY - 85 }, // Lia (L1 Right)
-        { x: centerX - 330, y: centerY - 215 }, // Momo (L2 Left-outer)
-        { x: centerX - 165, y: centerY - 225 }, // Cody (L2 Left-inner)
-        { x: centerX + 165, y: centerY - 225 }, // Aria (L2 Right-inner)
-        { x: centerX + 330, y: centerY - 215 }, // Sonix (L2 Right-outer)
+        { x: centerX - 170, y: centerY - 105 }, // Rika (L1 Left Hub)
+        { x: centerX + 170, y: centerY - 105 }, // Lia (L1 Right Hub)
+        { x: centerX - 275, y: centerY - 235 }, // Momo (L2 Outer Left Star Point)
+        { x: centerX - 125, y: centerY - 250 }, // Cody (L2 Inner Left Star Spike)
+        { x: centerX + 125, y: centerY - 250 }, // Aria (L2 Inner Right Star Spike)
+        { x: centerX + 275, y: centerY - 235 }, // Sonix (L2 Outer Right Star Point)
       ],
     };
   }

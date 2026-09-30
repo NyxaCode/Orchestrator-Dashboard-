@@ -7,6 +7,8 @@ import {
   Edge,
   useReactFlow,
   ReactFlowProvider,
+  Background,
+  BackgroundVariant,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
@@ -54,6 +56,7 @@ export const GraphCanvasInner: React.FC = () => {
   const [forceSettings, setForceSettings] = useState<ForceGraphSettings>(DEFAULT_FORCE_SETTINGS);
   const [isControlsOpen, setIsControlsOpen] = useState(false);
   const simulationRef = useRef<ObsidianForceSimulation | null>(null);
+  const isDraggingRef = useRef(false);
 
   // Build React Flow Nodes
   const initialNodes: UnifiedNodeType[] = useMemo(() => {
@@ -259,20 +262,26 @@ export const GraphCanvasInner: React.FC = () => {
       agentList,
       simLinks,
       (simNodes) => {
+        const activeDragId = simulationRef.current?.getActiveDraggingId();
         setNodes((prevNodes) =>
           prevNodes.map((pn) => {
+            // For the node actively being dragged by cursor, don't overwrite its React Flow position
+            if (pn.id === activeDragId) {
+              return pn;
+            }
             const sn = simNodes.find((n) => n.id === pn.id);
             if (!sn || !isFinite(sn.x as number) || !isFinite(sn.y as number)) return pn;
-            // Only update if movement is greater than 1.5px to prevent micro-jitters and save CPU
+
             const dx = Math.abs((sn.x as number) - pn.position.x);
             const dy = Math.abs((sn.y as number) - pn.position.y);
-            if (dx < 1.5 && dy < 1.5) return pn;
+            // Sensitive threshold (0.2px) so movement is fluid and continuous
+            if (dx < 0.2 && dy < 0.2) return pn;
 
             return {
               ...pn,
               position: {
-                x: Math.round(sn.x as number),
-                y: Math.round(sn.y as number),
+                x: sn.x as number,
+                y: sn.y as number,
               },
             };
           })
@@ -292,7 +301,8 @@ export const GraphCanvasInner: React.FC = () => {
         if (batch.length > 0) {
           updateAgentPositionsBatch(batch);
         }
-      }
+      },
+      false // do not auto-start heavy physics on mount; keep crisp radial star layout
     );
 
     return () => {
@@ -312,11 +322,11 @@ export const GraphCanvasInner: React.FC = () => {
     setNodes(freshNodes);
 
     if (simulationRef.current) {
-      simulationRef.current.reheat(0.15);
+      simulationRef.current.reheat(0.12);
     }
 
     setTimeout(() => {
-      fitView({ duration: 400, padding: 0.25 });
+      fitView({ duration: 300, padding: 0.25 });
     }, 50);
   };
 
@@ -330,7 +340,7 @@ export const GraphCanvasInner: React.FC = () => {
 
   const handleReheatSimulation = () => {
     if (simulationRef.current) {
-      simulationRef.current.reheat(0.7);
+      simulationRef.current.reheat(0.25);
     }
   };
 
@@ -338,12 +348,13 @@ export const GraphCanvasInner: React.FC = () => {
     setForceSettings(DEFAULT_FORCE_SETTINGS);
     if (simulationRef.current) {
       simulationRef.current.updateSettings(DEFAULT_FORCE_SETTINGS);
-      simulationRef.current.reheat(0.6);
+      simulationRef.current.reheat(0.2);
     }
   };
 
-  // Node Drag Interactions
+  // Node Drag Interactions - Native 60fps React Flow without fighting physics loop
   const onNodeDragStart = useCallback((_event: any, node: Node) => {
+    isDraggingRef.current = true;
     simulationRef.current?.onDragStart(node.id, node.position.x, node.position.y);
   }, []);
 
@@ -353,28 +364,17 @@ export const GraphCanvasInner: React.FC = () => {
 
   const onNodeDragStop = useCallback(
     (_event: any, node: Node) => {
-      simulationRef.current?.onDragEnd(node.id, Math.round(node.position.x), Math.round(node.position.y));
-      updateAgentPosition(node.id, Math.round(node.position.x), Math.round(node.position.y));
+      isDraggingRef.current = false;
+      const finalX = Math.round(node.position.x);
+      const finalY = Math.round(node.position.y);
+      simulationRef.current?.onDragEnd(node.id, finalX, finalY);
+      updateAgentPosition(node.id, finalX, finalY);
     },
     [updateAgentPosition]
   );
 
   return (
-    <div className="relative w-full h-full bg-[#0a0e14] overflow-hidden">
-      {/* Clean Ambient Space Backdrop */}
-      <div
-        className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-red-600/[0.04] blur-[120px]"
-        aria-hidden="true"
-      />
-
-      {/* Clean Subtle Grid Dots */}
-      <svg className="pointer-events-none absolute inset-0 w-full h-full opacity-20" aria-hidden="true">
-        <pattern id="dot-grid-pat" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
-          <circle cx="2" cy="2" r="0.75" fill="rgba(255, 255, 255, 0.2)" />
-        </pattern>
-        <rect width="100%" height="100%" fill="url(#dot-grid-pat)" />
-      </svg>
-
+    <div className="relative w-full h-full bg-[#0a0e14] overflow-hidden select-none">
       {/* SIMPLE TOP-LEFT STATUS BADGE */}
       <div className="absolute top-3.5 left-3.5 z-20 select-none pointer-events-auto">
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#121820]/90 border border-white/10 shadow-lg backdrop-blur-md">
@@ -473,7 +473,14 @@ export const GraphCanvasInner: React.FC = () => {
         elevateNodesOnSelect={false}
         elevateEdgesOnSelect={false}
         className="cursor-grab active:cursor-grabbing"
-      />
+      >
+        <Background
+          variant={BackgroundVariant.Dots}
+          gap={24}
+          size={1}
+          color="rgba(255, 255, 255, 0.14)"
+        />
+      </ReactFlow>
     </div>
   );
 };

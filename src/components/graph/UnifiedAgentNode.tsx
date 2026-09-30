@@ -86,7 +86,7 @@ export const UnifiedAgentNode = memo(({ data }: NodeProps<UnifiedNodeType>) => {
       tabIndex={0}
       aria-label={`${agent.name}, peran ${agent.role}, model ${modelName}, status ${agent.status}`}
       className={cn(
-        'relative flex flex-col items-center justify-center cursor-pointer select-none transition-all duration-200 outline-none group',
+        'relative flex flex-col items-center justify-center cursor-pointer select-none outline-none group will-change-transform',
         !isIncludedInProject && 'opacity-25 hover:opacity-70'
       )}
     >
@@ -145,21 +145,20 @@ export const UnifiedAgentNode = memo(({ data }: NodeProps<UnifiedNodeType>) => {
             }}
           />
 
-          {/* Ambient Glow Aura (Obsidian Note Graph Feel) */}
+          {/* Ambient Glow Aura (GPU-Accelerated Light Glow) */}
           <div
             className={cn(
-              'absolute -inset-2 rounded-full transition-opacity duration-300 pointer-events-none filter blur-[8px]',
+              'absolute -inset-1 rounded-full transition-opacity duration-200 pointer-events-none',
               isSelected
                 ? 'opacity-100'
                 : isBusy
-                ? 'opacity-100'
+                ? 'opacity-90'
                 : isOrchestrator
-                ? 'opacity-80 group-hover/node:opacity-100'
-                : 'opacity-35 group-hover/node:opacity-90'
+                ? 'opacity-60 group-hover/node:opacity-100'
+                : 'opacity-20 group-hover/node:opacity-75'
             )}
             style={{
-              backgroundColor: isSelected || isBusy ? agentColor : isOrchestrator ? '#ef4444' : agentColor,
-              opacity: isSelected ? 0.45 : isBusy ? 0.35 : undefined,
+              boxShadow: `0 0 14px ${isSelected || isBusy ? agentColor : isOrchestrator ? '#ef4444' : agentColor}`,
             }}
             aria-hidden="true"
           />
@@ -176,8 +175,7 @@ export const UnifiedAgentNode = memo(({ data }: NodeProps<UnifiedNodeType>) => {
           {/* Orchestrator Outer Subtle Ring */}
           {isOrchestrator && (
             <div
-              className="absolute -inset-3.5 rounded-full border border-red-500/25 pointer-events-none animate-pulse"
-              style={{ animationDuration: '3s' }}
+              className="absolute -inset-3.5 rounded-full border border-red-500/20 pointer-events-none"
               aria-hidden="true"
             />
           )}
@@ -224,12 +222,19 @@ export const UnifiedAgentNode = memo(({ data }: NodeProps<UnifiedNodeType>) => {
           />
         </div>
 
-        {/* SIDE BUTTONS DI SISI KANAN (ABSOLUTE POSITIONING) */}
-        <div className="absolute left-[calc(100%+8px)] top-1/2 -translate-y-1/2 flex flex-col gap-1.5 z-30">
+        {/* QUICK ACTION BUTTONS (Smoothly appears on Hover or when Node is Selected) */}
+        <div
+          className={cn(
+            'absolute left-[calc(100%+8px)] top-1/2 -translate-y-1/2 flex flex-col gap-1.5 z-30 transition-all duration-200',
+            isSelected
+              ? 'opacity-100 scale-100 pointer-events-auto'
+              : 'opacity-0 scale-90 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:scale-100 group-focus-within:pointer-events-auto'
+          )}
+        >
           {/* Button 1: Terminal / Log (>_) */}
           <button
             type="button"
-            title="Terminal"
+            title="Buka Terminal & Log Agen"
             aria-label="Terminal"
             onClick={handleOpenTerminal}
             className="w-7 h-7 rounded-full bg-[#161e28]/95 hover:bg-[#222d3d] border border-white/20 hover:border-red-400/60 text-gray-300 hover:text-white flex items-center justify-center shadow-xl transition-all duration-150 hover:scale-115 active:scale-95 cursor-pointer backdrop-blur-md group/btn"
@@ -240,7 +245,7 @@ export const UnifiedAgentNode = memo(({ data }: NodeProps<UnifiedNodeType>) => {
           {/* Button 2: Chat (Direct Session Trigger) */}
           <button
             type="button"
-            title="Chat"
+            title="Mulai Chat Langsung"
             aria-label="Chat"
             onClick={handleStartChat}
             style={{

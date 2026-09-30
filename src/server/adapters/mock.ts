@@ -167,6 +167,14 @@ export class MockAdapter implements AgentAdapter {
     });
   }
 
+  syncAgents(agentsMap: Record<string, AgentDTO> | Map<string, AgentDTO>): void {
+    if (agentsMap instanceof Map) {
+      this.agents = new Map(agentsMap);
+    } else {
+      this.agents = new Map(Object.entries(agentsMap));
+    }
+  }
+
   updateAgentPosition(id: string, x: number, y: number): void {
     const agent = this.agents.get(id);
     if (agent) {
@@ -417,8 +425,20 @@ export class MockAdapter implements AgentAdapter {
         } else {
           replyContent = `Salam! **Lia** mendengarkan. Untuk riset "${input.content}", aku sudah mengekstrak pola harmoni audio dan referensi akustik. Sampel spektrum siap diintegrasikan ke pipeline.`;
         }
+      } else if (target.id === 'momo') {
+        const lower = input.content.toLowerCase();
+        replyContent = `Hai! **Momo** di sini (Sub-Agent Kurasi Feed Komunitas · \`${target.model_label}\`). Mengenai: "${input.content}", postingan feed edukasi hamster telah diverifikasi, hashtag komunitas dibersihkan dari spam, dan antrian kurasi terjadwal rapi.`;
+      } else if (target.id === 'cody') {
+        const lower = input.content.toLowerCase();
+        replyContent = `Halo! **Cody** siap membantu (Auto-Responder FAQ & Resolusi Tiket · \`${target.model_label}\`). Instruksi: "${input.content}" telah diproses. Template panduan kandang & penanganan komplain tiket dijawab instan dengan akurasi 99.2%.`;
+      } else if (target.id === 'aria') {
+        const lower = input.content.toLowerCase();
+        replyContent = `Salam! **Aria** aktif (DSP Waveform & Sintesis Vokal · \`${target.model_label}\`). Parameter audio untuk: "${input.content}" selesai dikalibrasi. Filter formant resonansi vokal disetel seimbang tanpa distorsi clipping.`;
+      } else if (target.id === 'sonix') {
+        const lower = input.content.toLowerCase();
+        replyContent = `Salam! **Sonix** standby (FFT Spectrogram Analyzer & Harmonics · \`${target.model_label}\`). Hasil kalkulasi spektrum Fourier untuk: "${input.content}" mendeteksi nada dasar optimal di 440Hz dengan harmonik bersih hingga 16kHz.`;
       } else {
-        replyContent = `Halo! Saya **${target.name}**. Saya telah memproses permintaan: "${input.content}". Eksekusi tugas lokal selesai tanpa kendala.`;
+        replyContent = `Halo! Saya **${target.name}** (${target.description || 'Sub-Agent terdaftar'} · \`${target.model_label}\`). Permintaan: "${input.content}" telah berhasil dieksekusi dalam simulasi mock.`;
       }
 
       const words = replyContent.split(' ');
@@ -511,27 +531,208 @@ export class MockAdapter implements AgentAdapter {
       return;
     }
 
-    const delegateToRika = contentLower.includes('rika') || contentLower.includes('hamster') || contentLower.includes('cs') || contentLower.includes('konten') || contentLower.includes('user') || !contentLower.includes('lia');
-    const delegateToLia = contentLower.includes('lia') || contentLower.includes('musik') || contentLower.includes('riset') || contentLower.includes('audio') || contentLower.includes('analisis');
+    // Determine assignedAgent based on mentions, keywords, or roles
+    let assignedAgent: AgentDTO | null = null;
+    let customTaskTitle = '';
 
-    const delegatedAgents: AgentDTO[] = [];
-    if (delegateToRika && this.agents.has('rika')) delegatedAgents.push(this.agents.get('rika')!);
-    if (delegateToLia && this.agents.has('lia') && delegatedAgents.length === 0) delegatedAgents.push(this.agents.get('lia')!);
-    if (delegatedAgents.length === 0 && this.agents.size > 1) {
-      const candidates = Array.from(this.agents.values()).filter((a) => a.id !== 'shinaa');
-      if (candidates.length > 0) delegatedAgents.push(candidates[0]);
+    // Check multiple agent mentions for Collaborative Multi-Agent Thinking
+    const mentionedAgentsList: AgentDTO[] = [];
+    for (const [id, agent] of this.agents.entries()) {
+      if (agent.role === 'orchestrator') continue;
+      if (
+        contentLower.includes(`@${id.toLowerCase()}`) ||
+        contentLower.includes(`@${agent.name.toLowerCase()}`)
+      ) {
+        if (!mentionedAgentsList.some((a) => a.id === agent.id)) {
+          mentionedAgentsList.push(agent);
+        }
+      }
     }
 
-    const assignedAgent = delegatedAgents[0];
+    // MULTI-AGENT COLLABORATIVE REASONING:
+    // If user mentions multiple agents to think together, coordinate and stream collaborative thoughts!
+    if (mentionedAgentsList.length >= 2) {
+      const agentNamesList = mentionedAgentsList.map((a) => `**@${a.name}**`).join(', ');
+      const intro = `### 🤝 Multi-Agent Collaborative Reasoning\n\n` +
+        `> **Instruksi**: "${input.content}"\n\n` +
+        `Shinaa (Orchestrator Lead) mengaktifkan sesi penalaran kolaboratif bersama ${agentNamesList}. Semua agen yang ditag sedang menganalisis dan berpikir bersama secara mendalam.\n\n---\n\n`;
+
+      for (const chunk of intro.split(' ')) {
+        if (!this.activeRuns.has(runId)) break;
+        yield { type: 'message.delta', messageId, agentId: 'shinaa', delta: chunk + ' ' };
+        await new Promise((r) => setTimeout(r, 16));
+      }
+
+      // Start simultaneous delegations & busy status for all mentioned agents
+      const taskIds: Record<string, string> = {};
+      for (const agent of mentionedAgentsList) {
+        const tId = `task_${++this.taskCounter}`;
+        taskIds[agent.id] = tId;
+        const taskLabel = `Reasoning Kolaboratif: ${agent.name}`;
+
+        this.broadcast({ type: 'delegation.start', taskId: tId, fromAgentId: 'shinaa', toAgentId: agent.id, label: taskLabel });
+        yield { type: 'delegation.start', taskId: tId, fromAgentId: 'shinaa', toAgentId: agent.id, label: taskLabel };
+
+        agent.status = 'busy';
+        this.broadcast({ type: 'agent.status', agentId: agent.id, status: 'busy' });
+        yield { type: 'agent.status', agentId: agent.id, status: 'busy' };
+
+        this.broadcast({
+          type: 'log',
+          agentId: agent.id,
+          level: 'info',
+          message: `[KOLABORASI] Memproses penalaran mendalam domain (${agent.model_label})...`,
+          ts: Date.now(),
+        });
+      }
+
+      // Stream each agent's individual domain thoughts & contributions
+      for (const agent of mentionedAgentsList) {
+        if (!this.activeRuns.has(runId)) break;
+
+        let agentInsight = '';
+        if (agent.id === 'rika') {
+          agentInsight = `### 🐹 @${agent.name} (Customer Support & Community Lead · \`${agent.model_label}\`)\n` +
+            `> 🧠 *Thinking*: Menganalisis kebutuhan user, kepuasan komunitas, dan mitigasi kendala operasional...\n\n` +
+            `- **Dampak Komunitas**: Permintaan ini sangat positif untuk engagement user. Alur penanganan harus dibuat intuitif dengan template respons terstandar.\n` +
+            `- **Kesiapan Layanan**: Kami menyarankan sistem auto-escalation jika terjadi komplain lanjutan, dengan target respon SLA < 2 menit.\n\n---\n\n`;
+        } else if (agent.id === 'lia') {
+          agentInsight = `### 🎵 @${agent.name} (Audio & Research Cluster Lead · \`${agent.model_label}\`)\n` +
+            `> 🧠 *Thinking*: Menghitung parameter akustik, harmoni waveform, dan arsitektur data riset...\n\n` +
+            `- **Analisis Domain Audio**: Pipeline suara dan ekstraksi fitur perlu dipastikan sinkron dengan modul DSP agar tidak terjadi fasa latency.\n` +
+            `- **Rekomendasi Riset**: Dataset acuan menunjukkan akurasi sintesis meningkat signifikan dengan dynamic thresholding pada frekuensi tengah.\n\n---\n\n`;
+        } else if (agent.id === 'momo') {
+          agentInsight = `### 🐹 @${agent.name} (Kurasi Feed & Community Trends · \`${agent.model_label}\`)\n` +
+            `> 🧠 *Thinking*: Menelusuri feed komunitas hamster dan tren interaksi terkini...\n\n` +
+            `- **Kurasi Konten**: Algoritma kurasi mendeteksi antusiasme tinggi untuk format visual ringkas dan postingan informatif interaktif.\n` +
+            `- **Rekomendasi Publikasi**: Jadwalkan pada prime-time engagement dengan tagar resmi komunitas yang telah diverifikasi.\n\n---\n\n`;
+        } else if (agent.id === 'cody') {
+          agentInsight = `### ⚡ @${agent.name} (Auto-Responder FAQ & Resolusi Tiket · \`${agent.model_label}\`)\n` +
+            `> 🧠 *Thinking*: Mencocokkan knowledge base tiket dan merumuskan resolusi terotomatisasi...\n\n` +
+            `- **Database Resolusi**: Pola masalah telah dipetakan ke 3 template jawaban cepat dengan probabilitas penyelesaian mandiri 94.6%.\n` +
+            `- **Integrasi FAQ**: Pertanyaan umum akan otomatis ditambahkan ke ringkasan panduan bantuan interaktif.\n\n---\n\n`;
+        } else if (agent.id === 'aria') {
+          agentInsight = `### 🎙️ @${agent.name} (Vocal DSP & Formant Synthesis · \`${agent.model_label}\`)\n` +
+            `> 🧠 *Thinking*: Memfilter spektrum suara vokal dan formant frekuensi harmonik...\n\n` +
+            `- **DSP Waveform**: Filter formant vokal disetel pada rentang 1.2kHz – 3.8kHz dengan dynamic anti-aliasing bebas jitter.\n` +
+            `- **Kualitas Vokal**: Resonansi nada jernih dengan rasio Signal-to-Noise (SNR) > 48dB tanpa distorsi clipping.\n\n---\n\n`;
+        } else if (agent.id === 'sonix') {
+          agentInsight = `### 📊 @${agent.name} (FFT Spectrogram Analyzer · \`${agent.model_label}\`)\n` +
+            `> 🧠 *Thinking*: Melakukan fast Fourier transform dan inspeksi density spektral...\n\n` +
+            `- **Spektrogram FFT**: Distribusi energi frekuensi stabil merata di seluruh oktav nada tanpa lonjakan harmonik liar.\n` +
+            `- **Verifikasi Akurasi**: Konsistensi fasa frekuensi terverifikasi 99.8% siap dipasok ke modul berikutnya.\n\n---\n\n`;
+        } else {
+          agentInsight = `### ✦ @${agent.name} (${agent.description || 'Specialist Agent'} · \`${agent.model_label}\`)\n` +
+            `> 🧠 *Thinking*: Menganalisis parameter tugas dari perspektif spesialisasi ${agent.name}...\n\n` +
+            `- **Hasil Evaluasi**: Modul spesifik ${agent.name} telah diverifikasi dan siap dieksekusi secara terkoordinasi dengan agen lainnya.\n\n---\n\n`;
+        }
+
+        for (const chunk of agentInsight.split(' ')) {
+          if (!this.activeRuns.has(runId)) break;
+          yield { type: 'message.delta', messageId, agentId: 'shinaa', delta: chunk + ' ' };
+          await new Promise((r) => setTimeout(r, 16));
+        }
+
+        const tId = taskIds[agent.id];
+        if (tId) {
+          this.broadcast({ type: 'delegation.end', taskId: tId, fromAgentId: 'shinaa', toAgentId: agent.id, label: `Kolaborasi: ${agent.name}` });
+          yield { type: 'delegation.end', taskId: tId, fromAgentId: 'shinaa', toAgentId: agent.id, label: `Kolaborasi: ${agent.name}` };
+        }
+        agent.status = 'online';
+        this.broadcast({ type: 'agent.status', agentId: agent.id, status: 'online' });
+        yield { type: 'agent.status', agentId: agent.id, status: 'online' };
+      }
+
+      // Shinaa synthesizes consensus
+      const synthesis = `### 👑 Kesimpulan Konsensus Shinaa (Orchestrator Lead)\n\n` +
+        `Semua agen (${mentionedAgentsList.map((a) => `**${a.name}**`).join(', ')}) telah selesai menyumbangkan pemikiran mereka secara kolaboratif.\n` +
+        `- **Hasil Sinergi**: Analisis lintas-disiplin berhasil disatukan tanpa konflik antar-modul.\n` +
+        `- **Status Eksekusi**: Hasil reasoning telah dikonsolidasi dan siap ke tahap implementasi.\n\n` +
+        `Apakah Anda ingin menginstruksikan langkah eksekusi berikutnya?`;
+
+      for (const chunk of synthesis.split(' ')) {
+        if (!this.activeRuns.has(runId)) break;
+        yield { type: 'message.delta', messageId, agentId: 'shinaa', delta: chunk + ' ' };
+        await new Promise((r) => setTimeout(r, 16));
+      }
+
+      yield { type: 'message.done', messageId };
+      answeringAgent.status = 'online';
+      this.broadcast({ type: 'agent.status', agentId: 'shinaa', status: 'online' });
+      yield { type: 'agent.status', agentId: 'shinaa', status: 'online' };
+      this.activeRuns.delete(runId);
+      return;
+    }
+
+    // 1. Single direct mention check in message
+    if (mentionedAgentsList.length === 1) {
+      assignedAgent = mentionedAgentsList[0];
+    }
+
+    // 2. Keyword check if not directly mentioned
+    if (!assignedAgent) {
+      if (contentLower.includes('momo') || contentLower.includes('feed') || contentLower.includes('kurasi') || contentLower.includes('posting')) {
+        assignedAgent = this.agents.get('momo') || this.agents.get('rika') || null;
+        customTaskTitle = 'Kurasi feed & publikasi konten komunitas';
+      } else if (contentLower.includes('cody') || contentLower.includes('faq') || contentLower.includes('tiket') || contentLower.includes('ticket') || contentLower.includes('resolusi')) {
+        assignedAgent = this.agents.get('cody') || this.agents.get('rika') || null;
+        customTaskTitle = 'Resolusi tiket bantuan & template FAQ';
+      } else if (contentLower.includes('aria') || contentLower.includes('vokal') || contentLower.includes('synth') || contentLower.includes('formant') || contentLower.includes('waveform')) {
+        assignedAgent = this.agents.get('aria') || this.agents.get('lia') || null;
+        customTaskTitle = 'Sintesis DSP modul vokal & audio waveform';
+      } else if (contentLower.includes('sonix') || contentLower.includes('fft') || contentLower.includes('spektrogram') || contentLower.includes('spectrogram') || contentLower.includes('frekuensi') || contentLower.includes('nada')) {
+        assignedAgent = this.agents.get('sonix') || this.agents.get('lia') || null;
+        customTaskTitle = 'FFT Spectrogram scan & kalkulasi frekuensi nada';
+      } else if (contentLower.includes('lia') || contentLower.includes('audio') || contentLower.includes('musik') || contentLower.includes('riset') || contentLower.includes('akustik') || contentLower.includes('suara')) {
+        assignedAgent = this.agents.get('lia') || null;
+        customTaskTitle = 'Riset audio, harmoni akustik & analisis data';
+      } else if (contentLower.includes('rika') || contentLower.includes('hamster') || contentLower.includes('cs') || contentLower.includes('customer') || contentLower.includes('komunitas')) {
+        assignedAgent = this.agents.get('rika') || null;
+        customTaskTitle = 'Audit interaksi CS & kurasi feed hamster';
+      } else {
+        // Check any custom agents by name
+        for (const [id, agent] of this.agents.entries()) {
+          if (agent.role === 'orchestrator') continue;
+          if (contentLower.includes(agent.name.toLowerCase()) || contentLower.includes(id.toLowerCase())) {
+            assignedAgent = agent;
+            customTaskTitle = `Eksekusi modul spesifik ${agent.name}`;
+            break;
+          }
+        }
+      }
+    }
+
+    if (!assignedAgent) {
+      assignedAgent = this.agents.get('rika') || this.agents.get('lia') || Array.from(this.agents.values()).find(a => a.role !== 'orchestrator') || this.agents.get('shinaa')!;
+    }
+
     const taskId = `task_${++this.taskCounter}`;
-    const taskTitle = assignedAgent.id === 'rika'
-      ? `Audit interaksi CS & kurasi feed hamster`
-      : assignedAgent.id === 'lia'
-      ? `Sintesis parameter audio & laporan riset`
-      : `Eksekusi sub-task untuk ${assignedAgent.name}`;
+    const taskTitle = customTaskTitle || (
+      assignedAgent.id === 'rika'
+        ? `Audit interaksi CS & kurasi feed hamster`
+        : assignedAgent.id === 'lia'
+        ? `Sintesis parameter audio & laporan riset`
+        : assignedAgent.id === 'momo'
+        ? `Kurasi & publish feed hamster`
+        : assignedAgent.id === 'cody'
+        ? `Auto-responder FAQ & resolusi tiket user`
+        : assignedAgent.id === 'aria'
+        ? `Sintesis DSP Vokal & Formant`
+        : assignedAgent.id === 'sonix'
+        ? `FFT Spectrogram Analyzer & Komposisi Frekuensi`
+        : `Eksekusi sub-task untuk ${assignedAgent.name}`
+    );
+
+    const parentAgent = assignedAgent.parent_id && assignedAgent.parent_id !== 'shinaa'
+      ? this.agents.get(assignedAgent.parent_id)
+      : null;
 
     // 1. Orchestrator announces plan
-    const intro = `Siap, aku sudah menerima instruksi: "${input.content}". Aku delegasikan task ke **${assignedAgent.name}** untuk validasi mendalam.\n\n`;
+    const delegationRoutingText = parentAgent
+      ? `Aku mendelegasikan alur kerja melalui **${parentAgent.name}** (Cluster Lead) ke **${assignedAgent.name}** (\`${assignedAgent.model_label}\`) untuk eksekusi terdistribusi.`
+      : `Aku mendelegasikan task ke **${assignedAgent.name}** (\`${assignedAgent.model_label}\`) untuk validasi mendalam.`;
+
+    const intro = `Siap, aku sudah menerima instruksi: "${input.content}". ${delegationRoutingText}\n\n`;
     for (const chunk of intro.split(' ')) {
       if (!this.activeRuns.has(runId)) break;
       yield {
@@ -543,21 +744,65 @@ export class MockAdapter implements AgentAdapter {
       await new Promise((r) => setTimeout(r, 20));
     }
 
-    // 2. Delegation start
-    const delegationStartEvent: AdapterEvent = {
-      type: 'delegation.start',
-      taskId,
-      fromAgentId: 'shinaa',
-      toAgentId: assignedAgent.id,
-      label: taskTitle,
-    };
-    this.broadcast(delegationStartEvent);
-    yield delegationStartEvent;
+    // 2. Multi-tier or Direct Delegation Start
+    const parentTaskId = parentAgent ? `task_${++this.taskCounter}` : taskId;
+    if (parentAgent) {
+      // Shinaa -> Parent
+      this.broadcast({
+        type: 'delegation.start',
+        taskId: parentTaskId,
+        fromAgentId: 'shinaa',
+        toAgentId: parentAgent.id,
+        label: `Koordinasi Cluster: ${parentAgent.name}`,
+      });
+      yield {
+        type: 'delegation.start',
+        taskId: parentTaskId,
+        fromAgentId: 'shinaa',
+        toAgentId: parentAgent.id,
+        label: `Koordinasi Cluster: ${parentAgent.name}`,
+      };
+      parentAgent.status = 'busy';
+      this.broadcast({ type: 'agent.status', agentId: parentAgent.id, status: 'busy' });
+      yield { type: 'agent.status', agentId: parentAgent.id, status: 'busy' };
+
+      // Parent -> Child
+      this.broadcast({
+        type: 'delegation.start',
+        taskId,
+        fromAgentId: parentAgent.id,
+        toAgentId: assignedAgent.id,
+        label: taskTitle,
+      });
+      yield {
+        type: 'delegation.start',
+        taskId,
+        fromAgentId: parentAgent.id,
+        toAgentId: assignedAgent.id,
+        label: taskTitle,
+      };
+    } else {
+      // Direct: Shinaa -> assignedAgent
+      this.broadcast({
+        type: 'delegation.start',
+        taskId,
+        fromAgentId: 'shinaa',
+        toAgentId: assignedAgent.id,
+        label: taskTitle,
+      });
+      yield {
+        type: 'delegation.start',
+        taskId,
+        fromAgentId: 'shinaa',
+        toAgentId: assignedAgent.id,
+        label: taskTitle,
+      };
+    }
 
     const taskDto: TaskDTO = {
       id: taskId,
       project_id: input.projectId,
-      from_agent_id: 'shinaa',
+      from_agent_id: parentAgent ? parentAgent.id : 'shinaa',
       to_agent_id: assignedAgent.id,
       title: taskTitle,
       status: 'running',
@@ -582,18 +827,18 @@ export class MockAdapter implements AgentAdapter {
       type: 'log',
       agentId: assignedAgent.id,
       level: 'info',
-      message: `[DELEGASI DITERIMA] Memulai task: "${taskTitle}"`,
+      message: `[DELEGASI DITERIMA] Menjalankan modul: "${taskTitle}" (${assignedAgent.model_label})`,
       ts: Date.now(),
     });
 
     // Sub-agent processing simulation
-    await new Promise((r) => setTimeout(r, 1200));
+    await new Promise((r) => setTimeout(r, 1100));
 
     this.broadcast({
       type: 'log',
       agentId: assignedAgent.id,
       level: 'info',
-      message: `[SELESAI] Hasil validasi berhasil dikirim kembali ke Shinaa (Orchestrator).`,
+      message: `[SELESAI] Hasil validasi berhasil dikompilasi dan dikirim ke Orchestrator.`,
       ts: Date.now(),
     });
 
@@ -602,7 +847,7 @@ export class MockAdapter implements AgentAdapter {
       ...taskDto,
       status: 'done',
       finished_at: Date.now(),
-      result_summary: `Validasi berhasil diselesaikan oleh ${assignedAgent.name} (latency 1.2s, 0 error).`,
+      result_summary: `Validasi berhasil diselesaikan oleh ${assignedAgent.name} (latency 1.1s, model: ${assignedAgent.model_label}).`,
     };
 
     this.broadcast({
@@ -614,15 +859,54 @@ export class MockAdapter implements AgentAdapter {
       task: finishedTaskDto,
     };
 
-    const delegationEndEvent: AdapterEvent = {
-      type: 'delegation.end',
-      taskId,
-      fromAgentId: 'shinaa',
-      toAgentId: assignedAgent.id,
-      label: taskTitle,
-    };
-    this.broadcast(delegationEndEvent);
-    yield delegationEndEvent;
+    if (parentAgent) {
+      this.broadcast({
+        type: 'delegation.end',
+        taskId,
+        fromAgentId: parentAgent.id,
+        toAgentId: assignedAgent.id,
+        label: taskTitle,
+      });
+      yield {
+        type: 'delegation.end',
+        taskId,
+        fromAgentId: parentAgent.id,
+        toAgentId: assignedAgent.id,
+        label: taskTitle,
+      };
+      this.broadcast({
+        type: 'delegation.end',
+        taskId: parentTaskId,
+        fromAgentId: 'shinaa',
+        toAgentId: parentAgent.id,
+        label: `Koordinasi Cluster: ${parentAgent.name}`,
+      });
+      yield {
+        type: 'delegation.end',
+        taskId: parentTaskId,
+        fromAgentId: 'shinaa',
+        toAgentId: parentAgent.id,
+        label: `Koordinasi Cluster: ${parentAgent.name}`,
+      };
+      parentAgent.status = 'online';
+      this.broadcast({ type: 'agent.status', agentId: parentAgent.id, status: 'online' });
+      yield { type: 'agent.status', agentId: parentAgent.id, status: 'online' };
+    } else {
+      this.broadcast({
+        type: 'delegation.end',
+        taskId,
+        fromAgentId: 'shinaa',
+        toAgentId: assignedAgent.id,
+        label: taskTitle,
+      });
+      yield {
+        type: 'delegation.end',
+        taskId,
+        fromAgentId: 'shinaa',
+        toAgentId: assignedAgent.id,
+        label: taskTitle,
+      };
+    }
 
     assignedAgent.status = 'online';
     assignedAgent.active_tasks_count = Math.max(0, (assignedAgent.active_tasks_count || 1) - 1);
@@ -630,7 +914,7 @@ export class MockAdapter implements AgentAdapter {
     yield { type: 'agent.status', agentId: assignedAgent.id, status: 'online' };
 
     // 4. Orchestrator concludes
-    const conclusion = `\n\nTask **[${taskTitle}]** selesai dieksekusi oleh **${assignedAgent.name}**.\n- Status: \`Done\` (verifikasi lolos)\n- Pipeline delegasi kembali idle.\nSemua sistem sinkron di 9router. Ada hal lain yang perlu dikoordinasikan?`;
+    const conclusion = `\n\nTask **[${taskTitle}]** selesai dieksekusi oleh **${assignedAgent.name}**.\n- Status: \`Done\` (validasi sukses)\n- Latency: \`38ms\` · Gateway: \`9router mesh\`\n- Pipeline delegasi kembali standby.\nAda tugas berikutnya yang ingin dieksekusi?`;
     for (const chunk of conclusion.split(' ')) {
       if (!this.activeRuns.has(runId)) break;
       yield {

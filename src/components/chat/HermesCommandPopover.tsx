@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Terminal, Shield, Brain, Cpu, MessageSquare, Mic, Trash2, ListOrdered, HelpCircle } from 'lucide-react';
 
 export interface HermesCommand {
@@ -84,16 +84,20 @@ export const HERMES_COMMANDS: HermesCommand[] = [
 
 interface HermesCommandPopoverProps {
   filter: string;
+  activeIndex?: number;
+  onHoverIndex?: (index: number) => void;
   onSelectCommand: (cmd: HermesCommand) => void;
   onClose: () => void;
 }
 
 export const HermesCommandPopover: React.FC<HermesCommandPopoverProps> = ({
   filter,
+  activeIndex = 0,
+  onHoverIndex,
   onSelectCommand,
-  onClose,
 }) => {
   const cleanFilter = filter.toLowerCase().replace(/^\//, '');
+  const listRef = useRef<HTMLDivElement>(null);
 
   const filtered = HERMES_COMMANDS.filter((cmd) => {
     if (!cleanFilter) return true;
@@ -102,41 +106,68 @@ export const HermesCommandPopover: React.FC<HermesCommandPopoverProps> = ({
     return nameMatch || descMatch;
   });
 
+  // Auto-scroll active item into view
+  useEffect(() => {
+    if (listRef.current) {
+      const activeEl = listRef.current.children[activeIndex] as HTMLElement;
+      if (activeEl) {
+        activeEl.scrollIntoView({ block: 'nearest' });
+      }
+    }
+  }, [activeIndex]);
+
   if (filtered.length === 0) return null;
 
   return (
     <div className="absolute bottom-full mb-2 left-3 right-3 max-w-md z-50 rounded-xl bg-[#0e131b]/98 border border-amber-500/40 p-1.5 shadow-2xl backdrop-blur-xl text-white font-mono animate-in fade-in zoom-in-95 duration-100 select-none">
-      <div className="px-2 py-1 flex items-center justify-between border-b border-white/10 text-[10px] text-amber-400/90 font-bold uppercase tracking-wider">
+      <div className="px-2 py-1.5 flex items-center justify-between border-b border-white/10 text-[10px] text-amber-400 font-bold uppercase tracking-wider">
         <span>HERMES CLI COMMANDS</span>
-        <span className="text-gray-500 font-normal">ESC to close</span>
+        <span className="text-gray-400 font-normal">Tekan Tab atau ↵</span>
       </div>
 
-      <div className="max-h-56 overflow-y-auto divide-y divide-white/5 py-1">
-        {filtered.map((cmd) => (
-          <button
-            key={cmd.command}
-            type="button"
-            onClick={() => onSelectCommand(cmd)}
-            className="w-full text-left px-2 py-1.5 rounded-lg hover:bg-white/10 flex items-start gap-2.5 transition-colors cursor-pointer group"
-          >
-            <div className="mt-0.5 shrink-0 p-1 rounded bg-white/5 group-hover:bg-white/10">
-              {cmd.icon}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-amber-300 group-hover:text-amber-200">
-                  {cmd.command}
-                </span>
-                <span className="text-[10px] text-gray-500 truncate">
-                  {cmd.syntax}
-                </span>
+      <div ref={listRef} className="max-h-56 overflow-y-auto divide-y divide-white/5 py-1">
+        {filtered.map((cmd, idx) => {
+          const isHighlighted = idx === activeIndex;
+          return (
+            <button
+              key={cmd.command}
+              type="button"
+              onMouseEnter={() => onHoverIndex?.(idx)}
+              onClick={() => onSelectCommand(cmd)}
+              className={`w-full text-left px-2 py-1.5 rounded-lg flex items-start gap-2.5 transition-all cursor-pointer ${
+                isHighlighted
+                  ? 'bg-amber-500/25 text-white border border-amber-500/60 shadow-sm'
+                  : 'hover:bg-white/5 border border-transparent'
+              }`}
+            >
+              <div
+                className={`mt-0.5 shrink-0 p-1 rounded ${
+                  isHighlighted ? 'bg-amber-400/20 text-white' : 'bg-white/5 text-gray-400'
+                }`}
+              >
+                {cmd.icon}
               </div>
-              <p className="text-[10px] text-gray-400 truncate">
-                {cmd.description}
-              </p>
-            </div>
-          </button>
-        ))}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-amber-300">
+                    {cmd.command}
+                  </span>
+                  <span className="text-[10px] text-gray-500 truncate">
+                    {cmd.syntax}
+                  </span>
+                </div>
+                <p className="text-[10px] text-gray-400 truncate">
+                  {cmd.description}
+                </p>
+              </div>
+              {isHighlighted && (
+                <span className="shrink-0 text-[9px] px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-200 font-mono font-medium self-center">
+                  Tab ⇥
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

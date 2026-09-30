@@ -39,6 +39,14 @@ export const ConfigView: React.FC<ConfigViewProps> = ({ agent }) => {
             ? 'Anda adalah Rika, asisten CS dan spesialis komunitas hamster. Jawab pertanyaan user dengan nada ramah, periksa data adopsi, dan pastikan kepuasan komunitas optimal.'
             : agent.id === 'lia'
             ? 'Anda adalah Lia, sub-agent komputasi riset akustik dan komposisi musik. Ekstrak data frekuensi audio, pola harmoni, dan siapkan ringkasan teknis.'
+            : agent.id === 'momo'
+            ? 'Anda adalah Momo, kurator konten & feed hamster. Filter spam, pilih foto/video komunitas terbaik, dan jaga metrik interaksi feed.'
+            : agent.id === 'cody'
+            ? 'Anda adalah Cody, auto-responder FAQ & resolusi tiket user. Analisis pesan pelanggan, cocokkan dengan basis pengetahuan, dan jawab secara instan.'
+            : agent.id === 'aria'
+            ? 'Anda adalah Aria, spesialis sintesis vokal & DSP audio waveform. Terapkan formant filtering, kompresi dinamik, dan harmonisasi vokal.'
+            : agent.id === 'sonix'
+            ? 'Anda adalah Sonix, engine Fast Fourier Transform & analisis spektrogram nada. Ekstrak frekuensi dominan, harmonik ganjil/genap, dan pastikan audio bebas clipping.'
             : `Sub-agent ${agent.name} bertindak sebagai worker terdistribusi di bawah koordinasi Shinaa.`}
         </div>
       </div>
