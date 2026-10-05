@@ -6,7 +6,10 @@ let adapterInstance: AgentAdapter | null = null;
 let currentAdapterType: 'mock' | 'hermes' = 'mock';
 
 export function getAdapter(forceType?: 'mock' | 'hermes'): AgentAdapter {
-  const envType = (typeof process !== 'undefined' && process.env?.AGENT_ADAPTER === 'hermes') ? 'hermes' : 'mock';
+  const envType = (
+    (typeof process !== 'undefined' && process.env?.AGENT_ADAPTER === 'hermes') ||
+    (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_AGENT_ADAPTER === 'hermes')
+  ) ? 'hermes' : 'mock';
   const type = forceType || envType;
 
   if (!adapterInstance || currentAdapterType !== type) {

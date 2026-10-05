@@ -28,6 +28,7 @@ interface AgentsState {
   endDelegation: (taskId: string) => void;
   resetPositionsToRadial: () => void;
   triggerAutoSaveIndicator: () => void;
+  updateAgentConfig: (agentId: string, config: Partial<AgentDTO>) => void;
 }
 
 const initialMap: Record<string, AgentDTO> = {};
@@ -184,5 +185,22 @@ export const useAgentsStore = create<AgentsState>((set, get) => ({
     setTimeout(() => {
       set({ isAutoSaving: false });
     }, 1200);
+  },
+
+  updateAgentConfig: (agentId, config) => {
+    set((state) => {
+      const existing = state.agents[agentId];
+      if (!existing) return state;
+      return {
+        agents: {
+          ...state.agents,
+          [agentId]: {
+            ...existing,
+            ...config,
+          },
+        },
+      };
+    });
+    get().triggerAutoSaveIndicator();
   },
 }));

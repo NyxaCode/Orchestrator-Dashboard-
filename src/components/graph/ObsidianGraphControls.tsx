@@ -39,7 +39,7 @@ export const ObsidianGraphControls: React.FC<ObsidianGraphControlsProps> = ({
 
       {/* Clean Obsidian Minimalist Popover */}
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-64 p-3 rounded-xl bg-[#0f141c]/95 border border-white/15 text-white shadow-2xl backdrop-blur-xl z-50 select-none animate-in fade-in zoom-in-95 duration-100">
+        <div className="absolute right-0 top-full mt-2 w-64 max-w-[calc(100vw-32px)] p-3 rounded-xl bg-[#0f141c]/95 border border-white/15 text-white shadow-2xl backdrop-blur-xl z-50 select-none animate-in fade-in zoom-in-95 duration-100">
           {/* Header */}
           <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-white/10">
             <span className="text-[11px] font-bold font-mono tracking-wider text-gray-200 uppercase">

@@ -41,21 +41,23 @@ export const MessageItem: React.FC<MessageItemProps> = ({ message, threadId }) =
   // System Message Display
   if (message.role === 'system') {
     return (
-      <div className="py-2.5 px-3 flex flex-col items-center justify-center text-center">
+      <div className="py-2 px-2 sm:px-3 flex flex-col items-center justify-center text-center my-1 select-none">
         <div className="flex items-center gap-2 w-full my-1">
           <div className="flex-1 border-t border-dashed border-white/10" />
-          <span className="text-[11px] font-mono text-gray-400 px-2 tracking-tight">
+          <span className="text-[11px] font-mono text-gray-400 px-2 tracking-tight max-w-[85%] break-words">
             {message.content}
           </span>
           <div className="flex-1 border-t border-dashed border-white/10" />
         </div>
         {message.meta?.taskId && (
-          <TaskChip
-            taskId={message.meta.taskId}
-            targetAgentId={message.meta.targetAgentId}
-            taskTitle={message.meta.taskTitle || 'Delegasi Task'}
-            status={message.meta.taskStatus}
-          />
+          <div className="mt-1">
+            <TaskChip
+              taskId={message.meta.taskId}
+              targetAgentId={message.meta.targetAgentId}
+              taskTitle={message.meta.taskTitle || 'Delegasi Task'}
+              status={message.meta.taskStatus}
+            />
+          </div>
         )}
       </div>
     );
@@ -84,8 +86,10 @@ export const MessageItem: React.FC<MessageItemProps> = ({ message, threadId }) =
   return (
     <div
       className={cn(
-        'group flex gap-2.5 py-2.5 px-3 transition-colors rounded-lg',
-        isUser ? 'bg-white/[0.02]' : 'hover:bg-white/[0.02]'
+        'group flex gap-2.5 sm:gap-3 p-3 transition-all rounded-xl select-text',
+        isUser
+          ? 'bg-red-950/20 border border-red-500/20 shadow-xs'
+          : 'bg-[#101622] border border-white/10 shadow-xs hover:border-white/20'
       )}
     >
       {/* 28px Vector Profile Image Avatar */}
@@ -103,23 +107,23 @@ export const MessageItem: React.FC<MessageItemProps> = ({ message, threadId }) =
       {/* Message Body */}
       <div className="flex-1 min-w-0">
         {/* Header: Name + Time + Status */}
-        <div className="flex items-center gap-2 mb-1">
-          <span className="text-xs font-semibold text-white tracking-tight">
+        <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+          <span className="text-xs font-semibold text-white tracking-tight shrink-0">
             {senderName}
           </span>
           {agent?.model_label && (
-            <span className="text-[10px] font-mono text-gray-500">
+            <span className="text-[10px] font-mono text-gray-400 bg-white/5 border border-white/10 px-1.5 py-0.5 rounded truncate max-w-[130px]">
               {cleanModelName(agent.model_label)}
             </span>
           )}
-          <span className="text-[10px] font-mono text-gray-500 tabular-nums">
+          <span className="text-[10px] font-mono text-gray-400 tabular-nums ml-auto shrink-0">
             {formatTime(message.created_at)}
           </span>
 
           {/* Failed indicator & Retry */}
           {message.status === 'failed' && (
             <span className="flex items-center gap-1 text-[10px] font-mono text-red-400 ml-auto">
-              <AlertTriangle className="w-3 h-3" />
+              <AlertTriangle className="w-3 h-3 shrink-0" />
               <span>Gagal kirim</span>
               <button
                 type="button"
@@ -168,6 +172,38 @@ export const MessageItem: React.FC<MessageItemProps> = ({ message, threadId }) =
                 </div>
               );
             }
+            if (block.type === 'table' && block.tableHeaders && block.tableRows) {
+              return (
+                <div key={idx} className="my-2 overflow-x-auto rounded-lg border border-white/10 bg-[#070a0e] shadow-xs">
+                  <table className="w-full text-left font-mono text-[11px] border-collapse min-w-[260px]">
+                    <thead>
+                      <tr className="border-b border-white/10 bg-white/5 text-gray-300">
+                        {block.tableHeaders.map((th, thIdx) => (
+                          <th
+                            key={thIdx}
+                            className="px-3 py-1.5 font-bold whitespace-nowrap"
+                            dangerouslySetInnerHTML={{ __html: formatInlineMarkdown(th) }}
+                          />
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5 text-gray-300">
+                      {block.tableRows.map((row, rIdx) => (
+                        <tr key={rIdx} className="hover:bg-white/5 transition-colors">
+                          {row.map((cell, cIdx) => (
+                            <td
+                              key={cIdx}
+                              className="px-3 py-1.5 whitespace-pre-wrap"
+                              dangerouslySetInnerHTML={{ __html: formatInlineMarkdown(cell) }}
+                            />
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            }
             if (block.type === 'list' && block.items) {
               return (
                 <ul key={idx} className="list-disc pl-4 space-y-0.5">
@@ -196,24 +232,24 @@ export const MessageItem: React.FC<MessageItemProps> = ({ message, threadId }) =
 
         {/* Attached Files rendering */}
         {((message.meta?.attachments && message.meta.attachments.length > 0) || message.meta?.attachmentName) && (
-          <div className="flex flex-wrap gap-1.5 mt-2">
+          <div className="flex flex-wrap gap-1.5 mt-2.5">
             {message.meta?.attachments && message.meta.attachments.length > 0 ? (
               message.meta.attachments.map((att, attIdx) => (
                 <div
                   key={attIdx}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#0a0e14] border border-white/10 text-xs font-mono text-gray-200"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#0a0e14] border border-white/10 text-xs font-mono text-gray-200 shadow-xs max-w-full"
                 >
                   {getFileIcon(att.name)}
-                  <span className="font-medium text-gray-200 truncate max-w-[180px]">{att.name}</span>
-                  <span className="text-[10px] text-gray-400">({formatFileSize(att.size)})</span>
+                  <span className="font-medium text-gray-200 truncate max-w-[140px] sm:max-w-[200px]">{att.name}</span>
+                  <span className="text-[10px] text-gray-400 shrink-0">({formatFileSize(att.size)})</span>
                 </div>
               ))
             ) : message.meta?.attachmentName ? (
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#0a0e14] border border-white/10 text-xs font-mono text-gray-200">
-                <Paperclip className="w-3.5 h-3.5 text-red-400" />
-                <span className="font-medium text-gray-200 truncate max-w-[180px]">{message.meta.attachmentName}</span>
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#0a0e14] border border-white/10 text-xs font-mono text-gray-200 shadow-xs max-w-full">
+                <Paperclip className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                <span className="font-medium text-gray-200 truncate max-w-[140px] sm:max-w-[200px]">{message.meta.attachmentName}</span>
                 {message.meta.attachmentSize && (
-                  <span className="text-[10px] text-gray-400">({formatFileSize(message.meta.attachmentSize)})</span>
+                  <span className="text-[10px] text-gray-400 shrink-0">({formatFileSize(message.meta.attachmentSize)})</span>
                 )}
               </div>
             ) : null}
@@ -222,7 +258,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({ message, threadId }) =
 
         {/* Task Chip if delegation meta present */}
         {message.meta?.taskId && (
-          <div className="mt-2">
+          <div className="mt-2.5">
             <TaskChip
               taskId={message.meta.taskId}
               targetAgentId={message.meta.targetAgentId}

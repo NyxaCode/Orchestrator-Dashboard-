@@ -284,22 +284,22 @@ export const ChatPanel: React.FC = () => {
   return (
     <div className="flex flex-col h-full bg-[#0c1017] border-l border-white/10 select-none overflow-hidden">
       {/* Header (Top Title Bar) */}
-      <div className="h-11 border-b border-white/10 px-3 flex items-center justify-between shrink-0 bg-[#121820]">
-        <div className="flex items-center gap-2 min-w-0">
+      <div className="h-11 border-b border-white/10 px-3 flex items-center justify-between shrink-0 bg-[#121820] gap-2">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
           {targetAgent ? (
-            <div className="flex items-center gap-2 min-w-0">
+            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
               <button
                 type="button"
                 onClick={() => setTargetAgentId(activeProjectId, null)}
                 title="Kembali ke Orchestrator"
                 aria-label="Kembali ke Orchestrator"
-                className="p-1 rounded hover:bg-white/10 text-gray-400 hover:text-white transition-colors cursor-pointer"
+                className="p-1 rounded hover:bg-white/10 text-gray-400 hover:text-white transition-colors cursor-pointer shrink-0"
               >
                 <ArrowLeft className="w-4 h-4" />
               </button>
 
               <div
-                className="flex items-center gap-2 px-2 py-0.5 rounded-full border text-xs font-mono shadow-xs truncate"
+                className="flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-xs font-mono shadow-xs min-w-0 max-w-full"
                 style={{
                   backgroundColor: `${targetColor}18`,
                   borderColor: `${targetColor}40`,
@@ -313,18 +313,19 @@ export const ChatPanel: React.FC = () => {
                   avatarUrl={targetAgent.avatar_url}
                   size={18}
                   color={targetColor}
+                  className="shrink-0"
                 />
-                <span className="font-semibold text-white truncate max-w-[120px]">
+                <span className="font-semibold text-white truncate max-w-[100px] sm:max-w-[130px]">
                   {targetAgent.name}
                 </span>
-                <span className="text-[10px] opacity-75 font-mono">
+                <span className="text-[10px] opacity-75 font-mono truncate hidden sm:inline">
                   {cleanModelName(targetAgent.model_label)}
                 </span>
               </div>
             </div>
           ) : (
             <div className="flex items-center gap-2 min-w-0">
-              <span className="text-xs font-mono font-semibold tracking-wider text-gray-200 uppercase truncate">
+              <span className="text-xs font-mono font-semibold tracking-wider text-gray-200 uppercase truncate max-w-[140px] sm:max-w-[200px]">
                 {currentProject.name}
               </span>
               <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/5 border border-white/15 text-[11px] font-mono text-gray-300 shrink-0">
@@ -335,13 +336,13 @@ export const ChatPanel: React.FC = () => {
                   size={16}
                   color="#ef4444"
                 />
-                <span>Lead</span>
+                <span className="font-medium">Lead</span>
               </div>
             </div>
           )}
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 shrink-0">
           <IconButton
             aria-label={chatWidth >= 500 ? 'Perkecil lebar chat (420px)' : 'Perlebar chat (560px)'}
             title={chatWidth >= 500 ? 'Perkecil panel chat (420px)' : 'Perlebar panel chat (560px)'}
@@ -367,16 +368,16 @@ export const ChatPanel: React.FC = () => {
 
       {/* Target Agent Status Alert (if offline / error) */}
       {(isTargetOffline || isTargetError) && (
-        <div className="px-3 py-1 bg-red-950/40 border-b border-red-900/50 flex items-center gap-2 text-xs font-mono text-red-300">
+        <div className="px-3 py-1.5 bg-red-950/40 border-b border-red-900/50 flex items-center gap-2 text-xs font-mono text-red-300 shrink-0">
           <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-          <span>Agent {targetAgent?.name} sedang {targetAgent?.status}. Pesan mungkin tertunda.</span>
+          <span className="truncate">Agent {targetAgent?.name} sedang {targetAgent?.status}. Pesan mungkin tertunda.</span>
         </div>
       )}
 
       {/* Direct Session Context Banner */}
       {targetAgent && (
         <div
-          className="px-3 py-1 border-b flex items-center justify-between text-[11px] font-mono"
+          className="px-3 py-1.5 border-b flex items-center justify-between text-[11px] font-mono shrink-0 gap-2"
           style={{
             backgroundColor: `${targetColor}0e`,
             borderColor: `${targetColor}25`,
@@ -384,7 +385,7 @@ export const ChatPanel: React.FC = () => {
           }}
         >
           <div className="flex items-center gap-1.5 truncate">
-            <UserCheck className="w-3.5 h-3.5" style={{ color: targetColor }} />
+            <UserCheck className="w-3.5 h-3.5 shrink-0" style={{ color: targetColor }} />
             <span className="truncate">Sesi Langsung: {targetAgent.name}</span>
           </div>
           <span className="text-[10px] text-gray-400 shrink-0">
@@ -393,11 +394,11 @@ export const ChatPanel: React.FC = () => {
         </div>
       )}
 
-      {/* Message List */}
-      <div className="flex-1 overflow-y-auto">
+      {/* Message List Main Container (Proper Flex-1 with single controlled scroll) */}
+      <div className="flex-1 min-h-0 flex flex-col relative overflow-hidden bg-[#0a0e15]">
         {/* If direct session is empty, show welcoming prompt */}
         {targetAgent && messages.length === 0 && (
-          <div className="p-4 flex flex-col items-center justify-center text-center my-6">
+          <div className="p-4 sm:p-6 flex flex-col items-center justify-center text-center my-auto shrink-0 select-none">
             <div className="mb-3 relative">
               <div
                 className="absolute -inset-2 rounded-full blur-md opacity-40 pointer-events-none"
@@ -416,10 +417,10 @@ export const ChatPanel: React.FC = () => {
             <h4 className="text-sm font-semibold text-white mb-1">
               Sesi Langsung: {targetAgent.name}
             </h4>
-            <p className="text-xs text-gray-400 max-w-[260px] leading-relaxed mb-3">
+            <p className="text-xs text-gray-400 max-w-[280px] leading-relaxed mb-3">
               {targetAgent.description || 'Sub-agent spesialis dalam pipeline orkestrasi.'}
             </p>
-            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded bg-black/40 border border-white/10 text-[10px] font-mono text-gray-300">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/40 border border-white/10 text-[10px] font-mono text-gray-300">
               <span>Model: {cleanModelName(targetAgent.model_label)}</span>
               <span>·</span>
               <span>Status: {targetAgent.status}</span>

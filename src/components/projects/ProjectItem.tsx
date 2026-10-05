@@ -12,6 +12,7 @@ import {
   Plus,
   Layers,
   Kanban,
+  Network,
   Check,
   X,
   Trash2,
@@ -59,6 +60,13 @@ export const ProjectItem: React.FC<ProjectItemProps> = ({
     // Switch to Kanban view automatically so user immediately sees the filtered tasks!
     setViewMode('kanban');
     setMobileActiveTab('kanban');
+  };
+
+  const handleOpenGraph = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onSelect(project.id);
+    setViewMode('graph');
+    setMobileActiveTab('graph');
   };
 
   const handleOpenKanban = (e: React.MouseEvent) => {
@@ -140,8 +148,17 @@ export const ProjectItem: React.FC<ProjectItemProps> = ({
           </div>
         </div>
 
-        {/* Right Actions: Kanban Shortcut & Task Count */}
+        {/* Right Actions: Graph, Kanban Shortcut & Task Count */}
         <div className="flex items-center gap-1 shrink-0">
+          <button
+            type="button"
+            onClick={handleOpenGraph}
+            title="Buka Graf Orkestrasi Project"
+            className="p-1 rounded text-gray-500 hover:text-red-400 hover:bg-white/10 transition-colors opacity-70 group-hover:opacity-100 cursor-pointer"
+          >
+            <Network className="w-3.5 h-3.5" />
+          </button>
+
           <button
             type="button"
             onClick={handleOpenKanban}

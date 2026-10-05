@@ -167,24 +167,24 @@ export const KanbanBoard: React.FC = () => {
   return (
     <div className="flex flex-col h-full w-full bg-[#0a0e14] overflow-hidden select-none">
       {/* Board Top Toolbar */}
-      <div className="px-4 py-3 border-b border-white/10 bg-[#121820]/95 backdrop-blur-md shrink-0 flex flex-wrap items-center justify-between gap-3">
+      <div className="px-3 sm:px-4 py-2.5 sm:py-3 border-b border-white/10 bg-[#121820]/95 backdrop-blur-md shrink-0 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3">
         {/* Left Zone: Title, Sub-Project Selector, Task Counts */}
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-red-600 text-white shadow-[0_0_10px_rgba(220,38,38,0.5)]">
+        <div className="flex items-center justify-between sm:justify-start gap-2.5 min-w-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="p-1.5 rounded-lg bg-red-600 text-white shadow-[0_0_10px_rgba(220,38,38,0.5)] shrink-0">
               <Kanban className="w-4 h-4" />
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h2 className="text-sm font-bold font-mono text-white tracking-tight">
-                  TASK DELEGATION BOARD
+                <h2 className="text-xs sm:text-sm font-bold font-mono text-white tracking-tight truncate">
+                  TASK BOARD
                 </h2>
-                <span className="hidden sm:inline px-2 py-0.5 rounded text-[10px] font-mono text-gray-300 bg-white/10 border border-white/10">
-                  {filteredTasks.length} / {tasks.length} Tasks
+                <span className="px-1.5 py-0.2 rounded text-[10px] font-mono text-gray-300 bg-white/10 border border-white/10 shrink-0">
+                  {filteredTasks.length}/{tasks.length}
                 </span>
               </div>
-              <p className="text-[11px] text-gray-400 font-sans truncate">
-                {currentProject?.name || 'Project'} · Queue promt delegasi AI
+              <p className="text-[10px] sm:text-[11px] text-gray-400 font-sans truncate">
+                {currentProject?.name || 'Project'} · Queue delegasi AI
               </p>
             </div>
           </div>
@@ -207,19 +207,29 @@ export const KanbanBoard: React.FC = () => {
               </select>
             </div>
           )}
+
+          {/* Mobile + Task CTA shortcut */}
+          <button
+            type="button"
+            onClick={() => handleOpenAddTask('backlog')}
+            className="sm:hidden flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-600 text-white text-xs font-mono font-bold shrink-0"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Task</span>
+          </button>
         </div>
 
         {/* Right Zone: Filter Controls + Config File Button + New Task Button */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-0.5 sm:pb-0">
           {/* Search bar */}
-          <div className="relative">
+          <div className="relative flex-1 sm:flex-initial min-w-[120px]">
             <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500" />
             <input
               type="text"
               value={filters.searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari task, prompt, tag..."
-              className="w-36 sm:w-48 pl-8 pr-2.5 py-1 text-xs rounded-lg bg-[#18212d] border border-white/15 text-white placeholder-gray-500 focus:outline-none focus:border-red-500 font-mono"
+              placeholder="Cari task..."
+              className="w-full sm:w-36 md:w-48 pl-7 sm:pl-8 pr-2 py-1 text-xs rounded-lg bg-[#18212d] border border-white/15 text-white placeholder-gray-500 focus:outline-none focus:border-red-500 font-mono"
             />
           </div>
 
@@ -227,12 +237,12 @@ export const KanbanBoard: React.FC = () => {
           <select
             value={filters.agentId || ''}
             onChange={(e) => setAgentFilter(e.target.value || null)}
-            className="px-2.5 py-1 text-xs rounded-lg bg-[#18212d] border border-white/15 text-gray-300 focus:outline-none focus:border-red-500 font-mono cursor-pointer"
+            className="px-2 py-1 text-xs rounded-lg bg-[#18212d] border border-white/15 text-gray-300 focus:outline-none focus:border-red-500 font-mono cursor-pointer shrink-0 max-w-[130px]"
           >
             <option value="">Semua Agent</option>
             {agentList.map((a) => (
               <option key={a.id} value={a.id}>
-                {a.name} ({a.role})
+                {a.name}
               </option>
             ))}
           </select>
@@ -241,7 +251,7 @@ export const KanbanBoard: React.FC = () => {
           <select
             value={filters.priority || ''}
             onChange={(e) => setPriorityFilter((e.target.value as KanbanPriority) || null)}
-            className="hidden sm:block px-2 py-1 text-xs rounded-lg bg-[#18212d] border border-white/15 text-gray-300 focus:outline-none focus:border-red-500 font-mono cursor-pointer"
+            className="hidden sm:block px-2 py-1 text-xs rounded-lg bg-[#18212d] border border-white/15 text-gray-300 focus:outline-none focus:border-red-500 font-mono cursor-pointer shrink-0"
           >
             <option value="">Semua Prioritas</option>
             <option value="critical">Critical</option>
@@ -255,7 +265,7 @@ export const KanbanBoard: React.FC = () => {
             <select
               value={filters.tag || ''}
               onChange={(e) => setTagFilter(e.target.value || null)}
-              className="hidden md:block px-2 py-1 text-xs rounded-lg bg-[#18212d] border border-white/15 text-gray-300 focus:outline-none focus:border-red-500 font-mono cursor-pointer"
+              className="hidden md:block px-2 py-1 text-xs rounded-lg bg-[#18212d] border border-white/15 text-gray-300 focus:outline-none focus:border-red-500 font-mono cursor-pointer shrink-0"
             >
               <option value="">Semua Tag</option>
               {allDistinctTags.map((tag) => (
@@ -274,7 +284,7 @@ export const KanbanBoard: React.FC = () => {
                 clearFilters();
                 selectSubProject(null);
               }}
-              className="p-1 rounded-md text-red-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+              className="p-1 rounded-md text-red-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer shrink-0"
               title="Reset semua filter"
             >
               <X className="w-4 h-4" />
@@ -285,18 +295,18 @@ export const KanbanBoard: React.FC = () => {
           <button
             type="button"
             onClick={() => setIsConfigFileModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#18212d] hover:bg-[#202b3a] text-gray-200 border border-white/15 hover:border-red-500/40 text-xs font-mono transition-all cursor-pointer shadow-xs"
+            className="flex items-center gap-1 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg bg-[#18212d] hover:bg-[#202b3a] text-gray-200 border border-white/15 hover:border-red-500/40 text-xs font-mono transition-all cursor-pointer shadow-xs shrink-0"
             title="Buka konfigurasi file JSON (tasks.config.json)"
           >
             <FileCode className="w-3.5 h-3.5 text-red-400" />
-            <span className="hidden sm:inline">Config File</span>
+            <span className="hidden sm:inline">Config</span>
           </button>
 
-          {/* Add New Task Button */}
+          {/* Add New Task Button (Desktop/Tablet) */}
           <button
             type="button"
             onClick={() => handleOpenAddTask('backlog')}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-mono font-bold shadow-md shadow-red-900/40 transition-all cursor-pointer active:scale-95"
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-mono font-bold shadow-md shadow-red-900/40 transition-all cursor-pointer active:scale-95 shrink-0"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>+ Task</span>
@@ -304,8 +314,8 @@ export const KanbanBoard: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Board View: 5 Horizontal Columns */}
-      <div className="flex-1 overflow-x-auto p-4 flex gap-4 min-w-0 h-full">
+      {/* Main Board View: 5 Horizontal Columns with Mobile Touch Snap */}
+      <div className="flex-1 overflow-x-auto p-3 sm:p-4 flex gap-3 sm:gap-4 min-w-0 h-full snap-x snap-mandatory scroll-smooth">
         {COLUMNS_CONFIG.map((colConfig) => {
           const colTasks = filteredTasks.filter((t) => t.column_id === colConfig.id);
           return (

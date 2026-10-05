@@ -41,7 +41,7 @@ export const MentionPopover: React.FC<MentionPopoverProps> = ({
   if (matched.length === 0) return null;
 
   return (
-    <div className="absolute bottom-full mb-2 left-2 z-30 w-64 rounded-xl bg-[#0e131b]/98 border border-white/20 p-1 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-100 select-none">
+    <div className="absolute bottom-full mb-2 left-2.5 right-2.5 max-w-sm z-30 rounded-xl bg-[#0e131b]/98 border border-white/20 p-1.5 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-100 select-none">
       <div className="px-2.5 py-1.5 flex items-center justify-between text-[10px] font-mono text-gray-400 border-b border-white/10 uppercase">
         <span className="font-bold text-gray-200">MENTION AGENT</span>
         <span className="text-[9px] text-gray-500 font-normal">Tekan Tab atau ↵</span>

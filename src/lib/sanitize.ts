@@ -13,9 +13,11 @@ export function sanitizeText(text: string): string {
 }
 
 export interface MarkdownBlock {
-  type: 'paragraph' | 'code-block' | 'list' | 'system-line';
+  type: 'paragraph' | 'code-block' | 'list' | 'table' | 'system-line';
   content: string;
   items?: string[];
+  tableHeaders?: string[];
+  tableRows?: string[][];
   language?: string;
 }
 
@@ -28,6 +30,7 @@ export function parseMarkdown(text: string): MarkdownBlock[] {
   let codeBuffer: string[] = [];
   let codeLang = '';
   let listBuffer: string[] = [];
+  let tableBuffer: string[] = [];
 
   const flushList = () => {
     if (listBuffer.length > 0) {
@@ -37,6 +40,44 @@ export function parseMarkdown(text: string): MarkdownBlock[] {
         items: [...listBuffer],
       });
       listBuffer = [];
+    }
+  };
+
+  const flushTable = () => {
+    if (tableBuffer.length >= 2) {
+      // First row is headers
+      const rawHeader = tableBuffer[0];
+      const headers = rawHeader
+        .split('|')
+        .map((c) => c.trim())
+        .filter((_, idx, arr) => idx > 0 && idx < arr.length - 1);
+
+      // Remaining rows (skipping delimiter row :--- | :---)
+      const rows: string[][] = [];
+      for (let r = 1; r < tableBuffer.length; r++) {
+        const rowLine = tableBuffer[r];
+        if (rowLine.includes('---')) continue; // divider row
+        const cells = rowLine
+          .split('|')
+          .map((c) => c.trim())
+          .filter((_, idx, arr) => idx > 0 && idx < arr.length - 1);
+        if (cells.length > 0) {
+          rows.push(cells);
+        }
+      }
+
+      blocks.push({
+        type: 'table',
+        content: '',
+        tableHeaders: headers,
+        tableRows: rows,
+      });
+      tableBuffer = [];
+    } else if (tableBuffer.length > 0) {
+      tableBuffer.forEach((line) => {
+        blocks.push({ type: 'paragraph', content: line });
+      });
+      tableBuffer = [];
     }
   };
 
@@ -56,6 +97,7 @@ export function parseMarkdown(text: string): MarkdownBlock[] {
         inCodeBlock = false;
       } else {
         flushList();
+        flushTable();
         inCodeBlock = true;
         codeLang = line.trim().slice(3).trim();
       }
@@ -65,6 +107,16 @@ export function parseMarkdown(text: string): MarkdownBlock[] {
     if (inCodeBlock) {
       codeBuffer.push(line);
       continue;
+    }
+
+    // Table line detection (e.g. | col1 | col2 |)
+    const trimmed = line.trim();
+    if (trimmed.startsWith('|') && trimmed.endsWith('|') && trimmed.length > 2) {
+      flushList();
+      tableBuffer.push(trimmed);
+      continue;
+    } else {
+      flushTable();
     }
 
     // List item (e.g. - item or * item)
@@ -86,6 +138,7 @@ export function parseMarkdown(text: string): MarkdownBlock[] {
   }
 
   flushList();
+  flushTable();
 
   if (inCodeBlock && codeBuffer.length > 0) {
     blocks.push({

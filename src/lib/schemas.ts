@@ -23,6 +23,13 @@ export const AgentSchema = z.object({
   uptime: z.string().optional().default('99.9%'),
   active_tasks_count: z.number().optional().default(0),
   created_at: z.number(),
+  // Dynamic Configuration Simulation Fields
+  system_prompt: z.string().optional(),
+  temperature: z.number().optional(),
+  max_tokens: z.number().optional(),
+  thinking_level: z.enum(['off', 'low', 'medium', 'high', 'extended']).optional(),
+  tools: z.array(z.string()).optional(),
+  context_window: z.number().optional(),
 });
 export type AgentDTO = z.infer<typeof AgentSchema>;
 

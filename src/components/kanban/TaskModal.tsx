@@ -183,29 +183,29 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-150">
-      <div className="relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-xl bg-[#121820] border border-white/15 shadow-2xl text-left overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-150">
+      <div className="relative w-full max-w-2xl max-h-[92dvh] flex flex-col rounded-xl bg-[#121820] border border-white/15 shadow-2xl text-left overflow-hidden">
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 shrink-0 bg-[#0e141c]">
-          <div>
-            <h3 className="text-sm font-mono font-bold text-white uppercase tracking-wider">
+        <div className="flex items-center justify-between px-4 sm:px-5 py-3 sm:py-4 border-b border-white/10 shrink-0 bg-[#0e141c]">
+          <div className="min-w-0 pr-2">
+            <h3 className="text-xs sm:text-sm font-mono font-bold text-white uppercase tracking-wider truncate">
               {taskToEdit ? `EDIT TASK [${taskToEdit.id}]` : 'BUAT TASK BARU UNTUK AGENT AI'}
             </h3>
-            <p className="text-xs text-gray-400 mt-0.5">
-              Spesifikasi tugas, queue instruction prompt, skill & tool yang dibaca oleh Hermes.
+            <p className="text-[11px] sm:text-xs text-gray-400 mt-0.5 font-sans truncate">
+              Spesifikasi tugas, prompt instruction, skill & tool yang dibaca oleh Hermes.
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+            className="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Modal Body Form */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 space-y-4">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-3.5 sm:p-5 space-y-3.5 sm:space-y-4">
           {/* Title */}
           <div>
             <label className="block text-xs font-mono text-gray-300 font-semibold mb-1">

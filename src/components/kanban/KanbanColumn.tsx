@@ -27,7 +27,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
   onEditTask,
 }) => {
   return (
-    <div className="flex flex-col w-[320px] md:w-[340px] shrink-0 h-full rounded-xl bg-[#0e141c] border border-white/10 shadow-lg select-none overflow-hidden">
+    <div className="flex flex-col w-[86vw] max-w-[340px] sm:w-[320px] md:w-[340px] shrink-0 h-full rounded-xl bg-[#0e141c] border border-white/10 shadow-lg select-none overflow-hidden snap-center">
       {/* Column Header */}
       <div className={cn('flex items-center justify-between px-3.5 py-3 border-b', config.borderColor)}>
         <div className="flex items-center gap-2 min-w-0">

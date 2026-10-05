@@ -45,7 +45,8 @@ export const AppShell: React.FC = () => {
 
     const handleMouseMove = (e: MouseEvent) => {
       const delta = resizingRef.current.startX - e.clientX;
-      const newWidth = Math.max(340, Math.min(resizingRef.current.startWidth + delta, 680));
+      const maxAllowed = typeof window !== 'undefined' ? Math.max(320, window.innerWidth - 300) : 680;
+      const newWidth = Math.max(320, Math.min(resizingRef.current.startWidth + delta, Math.min(maxAllowed, 680)));
       setChatWidth(newWidth);
     };
 
@@ -143,7 +144,7 @@ export const AppShell: React.FC = () => {
                 chatCollapsed && 'overflow-hidden'
               )}
             >
-              <div style={{ width: `${chatWidth}px` }} className="h-full">
+              <div className="w-full h-full min-w-0 flex flex-col overflow-hidden">
                 <ErrorBoundary fallbackTitle="Panel Chat">
                   <ChatPanel />
                 </ErrorBoundary>

@@ -436,25 +436,25 @@ export const Composer: React.FC<ComposerProps> = ({
         />
 
         {/* BOTTOM COMPACT TOOLBAR (Mode, Model, Thinking - Pure Text Dropdowns!) */}
-        <div className="flex items-center justify-between gap-1 pt-1 border-t border-white/5 text-xs font-mono text-gray-300">
+        <div className="flex items-center justify-between gap-1.5 pt-1.5 border-t border-white/5 text-xs font-mono text-gray-300 min-w-0">
           {/* Left Action Buttons */}
-          <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
+          <div className="flex items-center gap-1 min-w-0 overflow-x-auto no-scrollbar py-0.5">
             {/* Attachment */}
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
               title="Lampirkan file"
               aria-label="Lampirkan file"
-              className="p-1 rounded text-gray-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+              className="p-1 rounded text-gray-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer shrink-0"
             >
               <Paperclip className="w-3.5 h-3.5" />
             </button>
 
             {/* Separator */}
-            <span className="text-gray-700 select-none">|</span>
+            <span className="text-gray-700 select-none shrink-0">|</span>
 
             {/* 1. MODE DROPDOWN (Pure Text: default ▾ / planning ▾ / ask ▾) */}
-            <div className="relative" data-hermes-popover>
+            <div className="relative shrink-0" data-hermes-popover>
               <button
                 type="button"
                 onClick={() => setOpenDropdown(openDropdown === 'mode' ? null : 'mode')}
@@ -493,21 +493,21 @@ export const Composer: React.FC<ComposerProps> = ({
             </div>
 
             {/* 2. MODEL & AGENT DROPDOWN (Pure Text) */}
-            <div className="relative" data-hermes-popover>
+            <div className="relative shrink-0" data-hermes-popover>
               <button
                 type="button"
                 onClick={() => setOpenDropdown(openDropdown === 'model' ? null : 'model')}
                 title="Pilih Model AI atau Agent"
-                className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/5 hover:bg-white/10 text-gray-200 border border-white/10 hover:border-amber-400/40 cursor-pointer transition-colors text-[11px]"
+                className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/5 hover:bg-white/10 text-gray-200 border border-white/10 hover:border-amber-400/40 cursor-pointer transition-colors text-[11px] max-w-full"
               >
-                <span className="font-medium truncate max-w-[110px]">
+                <span className="font-medium truncate max-w-[75px] sm:max-w-[110px]">
                   {modelShortDisplay}
                 </span>
                 <ChevronDown className="w-2.5 h-2.5 text-gray-400 shrink-0" />
               </button>
 
               {openDropdown === 'model' && (
-                <div className="absolute bottom-full left-0 mb-2 w-56 rounded-xl bg-[#0f141c]/98 border border-white/15 p-2 shadow-2xl backdrop-blur-xl z-50 divide-y divide-white/10">
+                <div className="absolute bottom-full left-0 mb-2 w-56 max-w-[calc(100vw-32px)] sm:max-w-xs rounded-xl bg-[#0f141c]/98 border border-white/15 p-2 shadow-2xl backdrop-blur-xl z-50 divide-y divide-white/10">
                   {/* Category A: Models */}
                   <div className="pb-1.5">
                     <div className="px-2 py-1 text-[10px] text-amber-400 font-bold uppercase tracking-wider">
@@ -587,8 +587,8 @@ export const Composer: React.FC<ComposerProps> = ({
               )}
             </div>
 
-            {/* 3. THINKING LEVEL DROPDOWN (Pure Text: medium ▾ / low ▾ / high ▾) */}
-            <div className="relative" data-hermes-popover>
+            {/* 3. THINKING LEVEL DROPDOWN (Pure Text: opens to right-0 so never cuts off!) */}
+            <div className="relative shrink-0" data-hermes-popover>
               <button
                 type="button"
                 onClick={() => setOpenDropdown(openDropdown === 'thinking' ? null : 'thinking')}
@@ -600,7 +600,7 @@ export const Composer: React.FC<ComposerProps> = ({
               </button>
 
               {openDropdown === 'thinking' && (
-                <div className="absolute bottom-full left-0 mb-2 w-40 rounded-xl bg-[#0f141c]/98 border border-white/15 p-1.5 shadow-2xl backdrop-blur-xl z-50">
+                <div className="absolute bottom-full right-0 mb-2 w-40 rounded-xl bg-[#0f141c]/98 border border-white/15 p-1.5 shadow-2xl backdrop-blur-xl z-50">
                   <div className="px-2 py-1 text-[10px] text-gray-400 font-bold uppercase border-b border-white/10">
                     Thinking
                   </div>
@@ -628,7 +628,7 @@ export const Composer: React.FC<ComposerProps> = ({
           </div>
 
           {/* Right Submit / Stop Button */}
-          <div className="shrink-0 ml-1">
+          <div className="shrink-0 ml-1.5">
             {isStreaming ? (
               <button
                 type="button"

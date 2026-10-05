@@ -32,8 +32,14 @@ export class HermesAdapter implements AgentAdapter {
   private token: string;
 
   constructor() {
-    this.baseUrl = (typeof process !== 'undefined' && process.env?.HERMES_BASE_URL) || 'http://localhost:8080';
-    this.token = (typeof process !== 'undefined' && process.env?.HERMES_TOKEN) || '';
+    this.baseUrl =
+      (typeof process !== 'undefined' && process.env?.HERMES_BASE_URL) ||
+      (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_HERMES_BASE_URL) ||
+      'http://localhost:8080';
+    this.token =
+      (typeof process !== 'undefined' && process.env?.HERMES_TOKEN) ||
+      (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_HERMES_TOKEN) ||
+      '';
   }
 
   async listAgents(): Promise<AgentDTO[]> {

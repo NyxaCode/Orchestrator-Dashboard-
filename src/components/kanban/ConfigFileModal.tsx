@@ -113,25 +113,25 @@ ${rawJson}
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
-      <div className="relative w-full max-w-3xl max-h-[92vh] flex flex-col rounded-xl bg-[#121820] border border-white/15 shadow-2xl text-left overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
+      <div className="relative w-full max-w-3xl max-h-[92dvh] flex flex-col rounded-xl bg-[#121820] border border-white/15 shadow-2xl text-left overflow-hidden">
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 shrink-0 bg-[#0e141c]">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-lg bg-red-950/60 border border-red-500/40 text-red-400">
+        <div className="flex items-center justify-between px-4 sm:px-5 py-3 sm:py-4 border-b border-white/10 shrink-0 bg-[#0e141c]">
+          <div className="flex items-center gap-2.5 min-w-0 pr-2">
+            <div className="p-2 rounded-lg bg-red-950/60 border border-red-500/40 text-red-400 shrink-0">
               <FileCode className="w-5 h-5" />
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-mono font-bold text-white uppercase tracking-wider">
+                <h3 className="text-xs sm:text-sm font-mono font-bold text-white uppercase tracking-wider truncate">
                   tasks.config.json
                 </h3>
-                <span className="px-2 py-0.5 rounded text-[10px] font-mono text-emerald-400 bg-emerald-950/50 border border-emerald-800/40">
-                  AI Agent File Spec
+                <span className="px-1.5 py-0.2 rounded text-[10px] font-mono text-emerald-400 bg-emerald-950/50 border border-emerald-800/40 shrink-0">
+                  AI Spec
                 </span>
               </div>
-              <p className="text-xs text-gray-400 mt-0.5 font-sans">
-                Basis konfigurasi file untuk Hermes AI & Operator. Bisa diedit, diexport, dan disinkronkan langsung.
+              <p className="text-[11px] sm:text-xs text-gray-400 mt-0.5 font-sans truncate">
+                Basis konfigurasi file untuk Hermes AI & Operator. Bisa diedit dan disinkronkan.
               </p>
             </div>
           </div>
@@ -139,38 +139,39 @@ ${rawJson}
           <button
             type="button"
             onClick={onClose}
-            className="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+            className="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Action Toolbar */}
-        <div className="flex flex-wrap items-center justify-between gap-2 px-5 py-2.5 bg-[#161e28] border-b border-white/10 text-xs font-mono">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 px-3 sm:px-5 py-2.5 bg-[#161e28] border-b border-white/10 text-xs font-mono">
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               type="button"
               onClick={handleCopyForAgent}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 text-white font-semibold transition-all cursor-pointer shadow-md"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 text-white font-semibold transition-all cursor-pointer shadow-md text-[11px] sm:text-xs"
             >
               {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-              <span>{copied ? 'Tersalin untuk AI!' : 'Salin Prompt Context untuk Agent'}</span>
+              <span>{copied ? 'Tersalin!' : 'Salin Prompt Context'}</span>
             </button>
 
             <button
               type="button"
               onClick={handleSaveAndApply}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#222e3d] hover:bg-[#2b3a4d] text-white border border-white/15 transition-all cursor-pointer"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-[#222e3d] hover:bg-[#2b3a4d] text-white border border-white/15 transition-all cursor-pointer text-[11px] sm:text-xs"
             >
               <Save className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Terapkan JSON</span>
+              <span>Terapkan</span>
             </button>
           </div>
 
           <div className="flex items-center gap-2">
-            <label className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 border border-white/10 transition-all cursor-pointer">
+            <label className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 border border-white/10 transition-all cursor-pointer text-[11px] sm:text-xs">
               <Upload className="w-3.5 h-3.5" />
-              <span>Import File</span>
+              <span className="hidden sm:inline">Import File</span>
+              <span className="sm:hidden">Import</span>
               <input
                 type="file"
                 accept=".json"
@@ -182,10 +183,10 @@ ${rawJson}
             <button
               type="button"
               onClick={handleDownloadFile}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 border border-white/10 transition-all cursor-pointer"
+              className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 border border-white/10 transition-all cursor-pointer text-[11px] sm:text-xs"
             >
               <Download className="w-3.5 h-3.5" />
-              <span>Download</span>
+              <span className="hidden sm:inline">Download</span>
             </button>
 
             <button
@@ -201,26 +202,26 @@ ${rawJson}
 
         {/* Feedback messages */}
         {errorMsg && (
-          <div className="flex items-center gap-2 px-5 py-2 bg-red-950/80 border-b border-red-500/40 text-xs text-red-300 font-mono">
+          <div className="flex items-center gap-2 px-4 py-2 bg-red-950/80 border-b border-red-500/40 text-xs text-red-300 font-mono">
             <AlertTriangle className="w-4 h-4 shrink-0 text-red-400" />
             <span>{errorMsg}</span>
           </div>
         )}
 
         {successMsg && (
-          <div className="flex items-center gap-2 px-5 py-2 bg-emerald-950/80 border-b border-emerald-500/40 text-xs text-emerald-300 font-mono">
+          <div className="flex items-center gap-2 px-4 py-2 bg-emerald-950/80 border-b border-emerald-500/40 text-xs text-emerald-300 font-mono">
             <Check className="w-4 h-4 shrink-0 text-emerald-400" />
             <span>{successMsg}</span>
           </div>
         )}
 
         {/* JSON Code Editor Area */}
-        <div className="flex-1 p-4 bg-[#0a0e14] overflow-hidden flex flex-col">
+        <div className="flex-1 p-3 sm:p-4 bg-[#0a0e14] overflow-hidden flex flex-col min-h-[240px]">
           <textarea
             value={rawJson}
             onChange={(e) => setRawJson(e.target.value)}
             spellCheck={false}
-            className="flex-1 w-full h-[380px] p-3 rounded-lg bg-[#0e141c] border border-white/10 text-emerald-300 font-mono text-xs leading-relaxed focus:outline-none focus:border-red-500 resize-none selection:bg-red-900/50"
+            className="flex-1 w-full min-h-[220px] p-3 rounded-lg bg-[#0e141c] border border-white/10 text-emerald-300 font-mono text-xs leading-relaxed focus:outline-none focus:border-red-500 resize-none selection:bg-red-900/50"
           />
         </div>
 

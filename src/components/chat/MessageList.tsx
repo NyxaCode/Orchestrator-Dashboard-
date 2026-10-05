@@ -50,11 +50,11 @@ export const MessageList: React.FC<MessageListProps> = ({
   }, [messages, isStreaming]);
 
   return (
-    <div className="relative flex-1 min-h-0">
+    <div className="relative flex-1 min-h-0 w-full h-full flex flex-col overflow-hidden">
       <div
         ref={containerRef}
         onScroll={handleScroll}
-        className="h-full overflow-y-auto px-1 py-2 space-y-1"
+        className="flex-1 overflow-y-auto px-3 sm:px-4 py-3.5 space-y-3 min-h-0"
       >
         {messages.map((msg) => (
           <MessageItem key={msg.id} message={msg} threadId={threadId} />
@@ -62,7 +62,7 @@ export const MessageList: React.FC<MessageListProps> = ({
 
         {/* Typing Indicator */}
         {isStreaming && (
-          <div className="flex items-center gap-2 px-4 py-2 text-xs font-mono text-gray-400">
+          <div className="flex items-center gap-2.5 px-3 py-2 text-xs font-mono text-gray-300 rounded-xl bg-white/5 border border-white/10 w-fit my-2 shadow-xs">
             <div className="flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-bounce" style={{ animationDelay: '0ms' }} />
               <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -78,9 +78,9 @@ export const MessageList: React.FC<MessageListProps> = ({
         <button
           type="button"
           onClick={() => scrollToBottom(true)}
-          className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-950/90 text-white border border-red-500/50 shadow-xl text-xs font-mono transition-transform hover:scale-105 active:scale-95 cursor-pointer backdrop-blur-md"
+          className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-red-950/90 text-white border border-red-500/50 shadow-xl text-xs font-mono transition-transform hover:scale-105 active:scale-95 cursor-pointer backdrop-blur-md"
         >
-          <ArrowDown className="w-3 h-3 text-red-400" />
+          <ArrowDown className="w-3.5 h-3.5 text-red-400" />
           <span>Pesan baru</span>
         </button>
       )}

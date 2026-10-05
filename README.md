@@ -157,6 +157,14 @@ Aplikasi telah dikonfigurasi untuk menerima koneksi dari host `0.0.0.0` pada por
 
 ---
 
+## 📚 Dokumentasi Lengkap Proyek
+
+- **[Dokumentasi Arsitektur Sistem & Spesifikasi Detail (docs/ARCHITECTURE.md)](./docs/ARCHITECTURE.md)**: Panduan lengkap arsitektur C4, taksonomi multi-agent, struktur store Zustand, pola adapter async generator, dan skema kontrak DTO.
+- **[Asumsi Desain & Implementasi (docs/ASSUMPTIONS.md)](./docs/ASSUMPTIONS.md)**: Catatan keputusan teknis.
+- **[Rencana Pengembangan Phase 2 (docs/PHASE2.md)](./docs/PHASE2.md)**: Roadmap integrasi live gateway.
+
+---
+
 ## 🔮 Rencana Phase 2 (Live Gateway)
 
 Dalam fase berikutnya saat beralih dari mockup ke produksi:

@@ -55,32 +55,33 @@ export const Sheet: React.FC<SheetProps> = ({
           'hidden md:flex h-full border-l border-white/10',
           width,
           // Mobile: bottom sheet
-          'max-md:flex max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:h-[80dvh] max-md:rounded-t-2xl max-md:border-t max-md:border-white/15'
+          'max-md:flex max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:h-[86dvh] max-md:rounded-t-2xl max-md:border-t max-md:border-white/15'
         )}
       >
         {/* Mobile Drag Handle */}
-        <div className="flex md:hidden justify-center pt-2.5 pb-1">
-          <div className="w-10 h-1 rounded-full bg-white/20" />
+        <div className="flex md:hidden justify-center pt-2.5 pb-1 cursor-grab active:cursor-grabbing">
+          <div className="w-12 h-1.5 rounded-full bg-white/25" />
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/10 shrink-0">
-          <div>
-            <h3 className="text-sm font-semibold text-white tracking-wide">{title}</h3>
-            {subtitle && <p className="text-xs font-mono text-gray-400 mt-0.5">{subtitle}</p>}
+        <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-white/10 shrink-0">
+          <div className="min-w-0 pr-2">
+            <h3 className="text-xs sm:text-sm font-semibold text-white tracking-wide truncate">{title}</h3>
+            {subtitle && <p className="text-[11px] sm:text-xs font-mono text-gray-400 mt-0.5 truncate">{subtitle}</p>}
           </div>
           <IconButton
             aria-label="Tutup panel"
             size="sm"
             variant="ghost"
             onClick={onClose}
+            className="shrink-0"
           >
             <X className="w-4 h-4" />
           </IconButton>
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto p-5 text-sm">{children}</div>
+        <div className="flex-1 overflow-y-auto p-3 sm:p-4 text-sm">{children}</div>
       </div>
     </div>
   );

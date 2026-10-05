@@ -78,23 +78,28 @@ export const HermesStatusBar: React.FC<HermesStatusBarProps> = ({ projectId }) =
   const latency = config.latencyMs || 42;
 
   return (
-    <div className="flex items-center justify-between px-3 py-1.5 bg-[#090d13] border-t border-b border-white/10 font-mono text-[11px] leading-tight select-none">
+    <div className="flex items-center justify-between gap-2 px-3 py-1.5 bg-[#090d13] border-t border-b border-white/10 font-mono text-[11px] leading-tight select-none min-w-0 shrink-0">
       {/* Left: Status & Model */}
-      <div className="flex items-center gap-2">
-        <span className="text-gray-500 font-bold">-</span>
-        <span className={`font-semibold ${statusColor}`}>{statusText}</span>
-        <span className="text-amber-500/50">|</span>
-        <span className="text-amber-400 font-medium">{getShortModelLabel(config.hermesModel)}</span>
+      <div className="flex items-center gap-1.5 min-w-0 shrink">
+        <span className="text-gray-500 font-bold shrink-0">-</span>
+        <span className={`font-semibold shrink-0 ${statusColor}`}>{statusText}</span>
+        <span className="text-amber-500/40">|</span>
+        <span
+          className="text-amber-400 font-medium truncate max-w-[85px] sm:max-w-[120px]"
+          title={config.hermesModel}
+        >
+          {getShortModelLabel(config.hermesModel)}
+        </span>
       </div>
 
       {/* Right: Context % | Latency | Time Thinking */}
-      <div className="flex items-center gap-2 text-gray-300">
+      <div className="flex items-center gap-1.5 text-gray-300 shrink-0 text-[10px] sm:text-[11px]">
         <span className="text-cyan-400">
-          [{barString}] {tokenPercent}% ctx
+          <span className="hidden md:inline">[{barString}] </span>{tokenPercent}% ctx
         </span>
-        <span className="text-amber-500/50">|</span>
+        <span className="text-amber-500/40">·</span>
         <span className="text-emerald-400 tabular-nums">{latency}ms</span>
-        <span className="text-amber-500/50">|</span>
+        <span className="text-amber-500/40">·</span>
         <span className="text-purple-300 tabular-nums">
           think {liveThinkingSec}s
         </span>
